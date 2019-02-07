@@ -34,7 +34,7 @@ ax.set_title("Input image")
 
 ax = axs[1]
 hb = ax.imshow(out['prob'][0].argmax(axis=0), cmap='tab20')
-ax.set_title("Confidence map (probability of the top prediction at each location)")
+ax.set_title("Class at each location")
 cb = fig.colorbar(hb, ax=ax)
 cb.set_label('Class Numbers')
 
@@ -52,6 +52,19 @@ hb = ax.imshow(out['prob'][0,22], cmap='tab20')
 ax.set_title("Confidence map (probability of the top prediction at each location)")
 cb = fig.colorbar(hb, ax=ax)
 cb.set_label('Confidence')
+
+plt.show()
+
+fig, axs = plt.subplots(ncols=2, figsize=(20,30))
+ax = axs[0]
+hb = ax.imshow(transformer.deprocess('data', net_full_conv.blobs['data'].data[0]))
+ax.set_title("Input image")
+
+ax = axs[1]
+hb = ax.imshow(out['prob'][0].max(axis=0))
+ax.set_title("highest probability at each location (irrespective of class)")
+cb = fig.colorbar(hb, ax=ax)
+cb.set_label('Probability')
 
 plt.show()
 
