@@ -1,15 +1,21 @@
+#  Script to classify material in a full image.
+#  Uses MINC GoogLeNet model modified to be fully convolutional
+#  Inputs:
+#       - path to image to classify
+#       - path to directory containing .caffemodel and .prototxt files
+
 import caffe
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
 
-def classify(path):
+def classify(im_path, model_path):
     # Load network
-    net_full_conv = caffe.Net('../deploy-googlenet-conv.prototxt', '../minc-googlenet-conv.caffemodel', caffe.TEST)
+    net_full_conv = caffe.Net(model_path + '/deploy-googlenet-conv.prototxt', model_path + '/minc-googlenet-conv.caffemodel', caffe.TEST)
 
     # load input and configure preprocessing
-    im = caffe.io.load_image(path)
+    im = caffe.io.load_image(im_path)
     print "im shape: " + str(im.shape[0])
 
     print net_full_conv.blobs['data'].data.shape
@@ -123,6 +129,7 @@ def modify_class_map(class_map):
 if __name__ == "__main__":
     caffe.set_mode_gpu()
     full_class_list = get_class_names(np.arange(0, 22))
-    im_path = sys.argv[1]
-    classify(im_path)
+    im = sys.argv[1]
+    model = sys.argv[2]
+    classify(im, model)
 
