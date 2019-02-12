@@ -2,7 +2,7 @@
 #  Uses MINC GoogLeNet model modified to be fully convolutional
 #  Inputs:
 #       - path to image to classify
-#       - path to directory containing .caffemodel and .prototxt files
+#       - path to directory containing .caffemodel and .prototxt files (and categories.txt file)
 
 import caffe
 import numpy as np
@@ -70,8 +70,8 @@ def classify(im_path, model_path):
 """
 
 
-def get_class_names(class_numbers):
-    text_file = open("../categories.txt", "r")
+def get_class_names(class_numbers, path):
+    text_file = open(path + "/categories.txt", "r")
     class_list = text_file.read().split('\n')
     for name in class_list:
         print '{} correspponds to class {}'.format(class_list.index(name),name)
