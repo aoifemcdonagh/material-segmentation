@@ -3,8 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-caffe.set_mode_gpu()
-
 
 def classify(path):
     # Load network
@@ -26,37 +24,26 @@ def classify(path):
 
     # make classification map by forward and print prediction indices at each location
     out = net_full_conv.forward_all(data=np.asarray([transformer.preprocess('data', im)]))
-    print out['prob'][0].argmax(axis=0)
+
+    class_map = out['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+    unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
+    class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
     # show net input and class labels (discrete numbers)
-    fig, axs = plt.subplots(ncols=2, figsize=(20,30))
-    fig.subplots_adjust(hspace=0.5, left = 0.07, right = 0.93)
+    fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
+    fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
     ax = axs[0]
     hb = ax.imshow(transformer.deprocess('data', net_full_conv.blobs['data'].data[0]))
     ax.set_title("Input image")
 
     ax = axs[1]
-    hb = ax.imshow(out['prob'][0].argmax(axis=0), cmap='tab20')
+    hb = ax.imshow(class_map,cmap=plt.get_cmap("plasma", len(unique_classes)))
     ax.set_title("Class at each location")
-    cb = fig.colorbar(hb, ax=ax)
+    step_length = float(len(unique_classes)-1)/len(unique_classes)
+    cb = fig.colorbar(hb, ticks=np.arange(step_length/2 ,len(unique_classes)-1, step_length))
+    cb.set_ticklabels(get_tick_labels(unique_classes))
     cb.set_label('Class Numbers')
 
-    #plt.show()
-
-    # show net input and confidence map (probability of the top prediction at each location)
-    fig, axs = plt.subplots(ncols=2, figsize=(20,30))
-    fig.subplots_adjust(hspace=0.5, left = 0.07, right = 0.93)
-    ax = axs[0]
-    hb = ax.imshow(transformer.deprocess('data', net_full_conv.blobs['data'].data[0]))
-    ax.set_title("Input image")
-
-    ax = axs[1]
-    hb = ax.imshow(out['prob'][0,22], cmap='tab20')
-    ax.set_title("Confidence map (probability of the top prediction at each location)")
-    cb = fig.colorbar(hb, ax=ax)
-    cb.set_label('Confidence')
-
-    #plt.show()
 
     fig, axs = plt.subplots(ncols=2, figsize=(20,30))
     ax = axs[0]
@@ -71,6 +58,71 @@ def classify(path):
 
     plt.show()
 
+
+"""
+    Function generating the corresponding class name for a class number outputted by network
+"""
+
+
+def get_class_names(class_numbers):
+    text_file = open("../categories.txt", "r")
+    class_list = text_file.read().split('\n')
+    for name in class_list:
+        print '{} correspponds to class {}'.format(class_list.index(name),name)
+
+    class_names = []
+    for number in class_numbers:
+        class_names.append(class_list[number])
+
+    print class_names
+
+    if len(class_names) == 1:  # If only one number is passed to function, we should return a string value
+        return class_names[0]
+    else:                       # Otherwise return a list of strings
+        return class_names
+
+
+"""
+    Function generating tick labels appropriate to each classified image
+"""
+
+
+def get_tick_labels(class_numbers):
+    class_names = get_class_names(class_numbers)
+    tick_labels = []
+    for (number, name) in zip(class_numbers, class_names):
+        tick_labels.append(str(number) + ": " + name)
+
+    return tick_labels
+
+
+"""
+    Function converting a matrix of numbers (corresponding to discrete, numerically unrelated class values) to a
+    matrix of numbers which can be plotted.
+    Need to assign numerical values of 0-len(unique_classes) in order to properly plot a class map
+        - if len(unique_classes) = 5 for example, instead of a prob_map containing a mix of numbers [0,4,16,19,21]
+          we would plot a modified_prob_map containing ndarray of numbers [0,1,2,3,4]
+        - Important to use the original unique_classes when generating tick labels! (in this case number corresponds
+          to a fixed class name)
+"""
+
+
+def modify_class_map(class_map):
+    unique_values = np.unique(class_map).tolist()  # list of unique values in class_map
+    modified_values = range(0,len(unique_values))  # list in range 0 - len(unique_values)
+    value_dict = {a:b for (a,b) in zip(unique_values, modified_values)}
+
+    modified_class_map = [[value_dict.get(class_map[i][j]) for j in range(0,class_map.shape[1])] for i in range(0, class_map.shape[0])]
+
+    print("Modified class map")
+    print(modified_class_map)
+
+    return modified_class_map
+
+
 if __name__ == "__main__":
+    caffe.set_mode_gpu()
+    full_class_list = get_class_names(np.arange(0, 22))
     im_path = sys.argv[1]
     classify(im_path)
+
