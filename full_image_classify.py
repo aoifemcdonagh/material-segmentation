@@ -9,10 +9,36 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
+#  Global dictionary containing class number : name pairs
+CLASS_LIST = {0: "brick",
+              1: "carpet",
+              2: "ceramic",
+              3: "fabric",
+              4: "foliage",
+              5: "food",
+              6: "glass",
+              7: "hair",
+              8: "leather",
+              9: "metal",
+              10: "mirror",
+              11: "other",
+              12: "painted",
+              13: "paper",
+              14: "plastic",
+              15: "polishedstone",
+              16: "skin",
+              17: "sky",
+              18: "stone",
+              19: "tile",
+              20: "wallpaper",
+              21: "water",
+              22: "wood"}
+
 
 def classify(im_path, model_path):
     # Load network
-    net_full_conv = caffe.Net(model_path + '/deploy-googlenet-conv.prototxt', model_path + '/minc-googlenet-conv.caffemodel', caffe.TEST)
+    net_full_conv = caffe.Net(model_path + '/deploy-googlenet-conv.prototxt',
+                              model_path + '/minc-googlenet-conv.caffemodel', caffe.TEST)
 
     # load input and configure preprocessing
     im = caffe.io.load_image(im_path)
@@ -23,9 +49,9 @@ def classify(im_path, model_path):
     print net_full_conv.blobs['data'].data.shape
 
     transformer = caffe.io.Transformer({'data': net_full_conv.blobs['data'].data.shape})
-    transformer.set_mean('data', np.array([104,117,124]))
-    transformer.set_transpose('data', (2,0,1))
-    transformer.set_channel_swap('data', (2,1,0))
+    transformer.set_mean('data', np.array([104, 117, 124]))
+    transformer.set_transpose('data', (2, 0, 1))
+    transformer.set_channel_swap('data', (2, 1, 0))
     transformer.set_raw_scale('data', 255.0)
 
     # make classification map by forward and print prediction indices at each location
@@ -43,15 +69,14 @@ def classify(im_path, model_path):
     ax.set_title("Input image")
 
     ax = axs[1]
-    hb = ax.imshow(class_map,cmap=plt.get_cmap("plasma", len(unique_classes)))
+    hb = ax.imshow(class_map, cmap=plt.get_cmap("plasma", len(unique_classes)))
     ax.set_title("Class at each location")
-    step_length = float(len(unique_classes)-1)/len(unique_classes)
-    cb = fig.colorbar(hb, ticks=np.arange(step_length/2 ,len(unique_classes)-1, step_length))
+    step_length = float(len(unique_classes) - 1) / len(unique_classes)
+    cb = fig.colorbar(hb, ticks=np.arange(step_length / 2, len(unique_classes) - 1, step_length))
     cb.set_ticklabels(get_tick_labels(unique_classes))
     cb.set_label('Class Numbers')
 
-
-    fig, axs = plt.subplots(ncols=2, figsize=(20,30))
+    fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
     ax = axs[0]
     hb = ax.imshow(transformer.deprocess('data', net_full_conv.blobs['data'].data[0]))
     ax.set_title("Input image")
@@ -70,21 +95,16 @@ def classify(im_path, model_path):
 """
 
 
-def get_class_names(class_numbers, path):
-    text_file = open(path + "/categories.txt", "r")
-    class_list = text_file.read().split('\n')
-    for name in class_list:
-        print '{} correspponds to class {}'.format(class_list.index(name),name)
-
+def get_class_names(class_numbers):
     class_names = []
     for number in class_numbers:
-        class_names.append(class_list[number])
+        class_names.append(CLASS_LIST.get(number))
 
     print class_names
 
     if len(class_names) == 1:  # If only one number is passed to function, we should return a string value
         return class_names[0]
-    else:                       # Otherwise return a list of strings
+    else:  # Otherwise return a list of strings
         return class_names
 
 
@@ -115,10 +135,11 @@ def get_tick_labels(class_numbers):
 
 def modify_class_map(class_map):
     unique_values = np.unique(class_map).tolist()  # list of unique values in class_map
-    modified_values = range(0,len(unique_values))  # list in range 0 - len(unique_values)
-    value_dict = {a:b for (a,b) in zip(unique_values, modified_values)}
+    modified_values = range(0, len(unique_values))  # list in range 0 - len(unique_values)
+    value_dict = {a: b for (a, b) in zip(unique_values, modified_values)}
 
-    modified_class_map = [[value_dict.get(class_map[i][j]) for j in range(0,class_map.shape[1])] for i in range(0, class_map.shape[0])]
+    modified_class_map = [[value_dict.get(class_map[i][j]) for j in range(0, class_map.shape[1])] for i in
+                          range(0, class_map.shape[0])]
 
     print("Modified class map")
     print(modified_class_map)
@@ -132,4 +153,3 @@ if __name__ == "__main__":
     im = sys.argv[1]
     model = sys.argv[2]
     classify(im, model)
-
