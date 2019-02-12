@@ -7,7 +7,9 @@
 import caffe
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import sys
+import argparse
 
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",
@@ -35,6 +37,9 @@ CLASS_LIST = {0: "brick",
               22: "wood"}
 
 
+
+
+
 def classify(im_path, model_path):
     # Load network
     net_full_conv = caffe.Net(model_path + '/deploy-googlenet-conv.prototxt',
@@ -57,7 +62,20 @@ def classify(im_path, model_path):
     # make classification map by forward and print prediction indices at each location
     out = net_full_conv.forward_all(data=np.asarray([transformer.preprocess('data', im)]))
 
-    class_map = out['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+    return out
+
+
+"""
+    Function for plotting the output of classification model
+    Inputs:
+        - raw output from classification model
+        - optional original image to plot alongside classmap
+"""
+
+
+def plot_output(network_output, image=None):
+    class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+    prob_map = network_output['prob'][0].max(axis=0)
     unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
     class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
@@ -65,26 +83,28 @@ def classify(im_path, model_path):
     fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
     fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
     ax = axs[0]
-    hb = ax.imshow(transformer.deprocess('data', net_full_conv.blobs['data'].data[0]))
+    hb = ax.imshow(mpimg.imread(image))
     ax.set_title("Input image")
 
     ax = axs[1]
     ax.set_title("Class at each location")
     hb = ax.imshow(class_map, cmap=plt.get_cmap("gist_rainbow", len(unique_classes)))
 
-    step_length = float(len(unique_classes) - 1) / float(len(unique_classes))  # Define the step length between ticks for colorbar.
-    loc = np.arange(step_length / 2, len(unique_classes), step_length) if len(unique_classes) > 1 else [0.0]  # Shift each tick location so that the label is in the middle
+    step_length = float(len(unique_classes) - 1) / float(
+        len(unique_classes))  # Define the step length between ticks for colorbar.
+    loc = np.arange(step_length / 2, len(unique_classes), step_length) if len(unique_classes) > 1 else [
+        0.0]  # Shift each tick location so that the label is in the middle
     cb = fig.colorbar(hb, ticks=loc)
     cb.set_ticklabels(get_tick_labels(unique_classes))
     cb.set_label('Class Numbers')
 
     fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
     ax = axs[0]
-    hb = ax.imshow(transformer.deprocess('data', net_full_conv.blobs['data'].data[0]))
+    hb = ax.imshow(mpimg.imread(image))
     ax.set_title("Input image")
 
     ax = axs[1]
-    hb = ax.imshow(out['prob'][0].max(axis=0))
+    hb = ax.imshow(prob_map)
     ax.set_title("highest probability at each location (irrespective of class)")
     cb = fig.colorbar(hb, ax=ax)
     cb.set_label('Probability')
@@ -151,7 +171,20 @@ def modify_class_map(class_map):
 
 if __name__ == "__main__":
     caffe.set_mode_gpu()
-    full_class_list = get_class_names(np.arange(0, 22))
-    im = sys.argv[1]
-    model = sys.argv[2]
-    classify(im, model)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-i", "--image", type=str, help="path to image to be classified")
+    parser.add_argument("-m", "--model", type=str, help="path to directory containing .caffemodel and .prototxt files")
+    parser.add_argument("-p", "--plot", type=bool, default=True, help="to plot results")
+
+    args = parser.parse_args()
+    im = args.image
+    model = args.model
+    plot = args.plot
+
+    output = classify(im, model)
+
+    if plot is True:
+        plot_output(output, im)
+
+
