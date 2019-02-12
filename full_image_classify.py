@@ -71,8 +71,13 @@ def classify(im_path, model_path):
     ax = axs[1]
     hb = ax.imshow(class_map, cmap=plt.get_cmap("plasma", len(unique_classes)))
     ax.set_title("Class at each location")
-    step_length = float(len(unique_classes) - 1) / len(unique_classes)
-    cb = fig.colorbar(hb, ticks=np.arange(step_length / 2, len(unique_classes) - 1, step_length))
+
+    #  Define the step length between ticks for colorbar.
+    step_length = float(len(unique_classes) - 1) / float(len(unique_classes))
+
+    #  Shift each tick location so that the label is in the middle
+    loc = np.arange(step_length / 2, len(unique_classes), step_length) if len(unique_classes) > 1 else [0.0]
+    cb = fig.colorbar(hb, ticks=loc)
     cb.set_ticklabels(get_tick_labels(unique_classes))
     cb.set_label('Class Numbers')
 
