@@ -6,8 +6,9 @@
 
 import caffe
 import numpy as np
+import matplotlib
+matplotlib.switch_backend('agg')
 import matplotlib.pyplot as plt
-plt.switch_backend('agg')
 import matplotlib.image as mpimg
 import os
 import argparse
