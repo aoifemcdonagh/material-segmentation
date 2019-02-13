@@ -7,9 +7,11 @@
 import caffe
 import numpy as np
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import matplotlib.image as mpimg
-import sys
+import os
 import argparse
+from datetime import datetime
 
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",
@@ -109,8 +111,40 @@ def plot_output(network_output, image=None):
     cb = fig.colorbar(hb, ax=ax)
     cb.set_label('Probability')
 
+    plt.show(block=False)
+
+
+"""
+    Function for plotting the probability maps for all 23 classes of the MINC dataset
+    Inputs:
+        - network output
+        - optional path to save plots to. Default is in folder 'prob_maps' in current directory
+"""
+
+
+def plot_probability_maps(network_output, image=None, path=None):
+    path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    os.makedirs(path)
+
+    class_num = 3
+    test = network_output['prob'][0][class_num]
+
+    fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
+    ax = axs[0]
+    hb = ax.imshow(mpimg.imread(image))
+    ax.set_title("Input image")
+
+    ax = axs[1]
+    hb = ax.imshow(test, cmap='gray')
+    ax.set_title("Probability of class " + CLASS_LIST.get(class_num))
+    cb = fig.colorbar(hb, ax=ax)
+    cb.set_label('Probability')
+
     plt.show()
 
+    fig, ax = plt.subplots()
+    hb = ax.imshow(test, cmap='gray')
+    plt.savefig(path + "/" + str(class_num) + ".jpg")
 
 """
     Function generating the corresponding class name for a class number outputted by network
@@ -187,4 +221,4 @@ if __name__ == "__main__":
     if plot is True:
         plot_output(output, im)
 
-
+    plot_probability_maps(output, im)
