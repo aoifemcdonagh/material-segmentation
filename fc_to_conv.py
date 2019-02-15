@@ -1,5 +1,7 @@
 # Script to convert the fully connected layers of GoogLeNet to be convolutional
 
+# Assumes models are in the same directory and have specified names. Change model names/paths as necessary
+
 import caffe
 
 net = caffe.Net('deploy-googlenet.prototxt', 'minc-googlenet.caffemodel', caffe.TEST)
