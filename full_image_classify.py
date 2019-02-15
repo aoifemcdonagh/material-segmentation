@@ -14,6 +14,7 @@ import os
 import argparse
 from datetime import datetime
 
+
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",
               1: "carpet",
@@ -48,7 +49,6 @@ def classify(im_path, model_path):
     net_full_conv = caffe.Net(model_path + '/deploy-googlenet-conv.prototxt',
                               model_path + '/minc-googlenet-conv.caffemodel', caffe.TEST)
 
-    # load input and configure preprocessing
     im = caffe.io.load_image(im_path)
     print "im shape: " + str(im.shape[0])
 
@@ -119,6 +119,7 @@ def plot_output(network_output, image=None):
     Function for plotting the probability maps for all 23 classes of the MINC dataset
     Inputs:
         - network output
+        - optional path to image to include in plot
         - optional path to save plots to. Default is in folder 'prob_maps' in current directory
 """
 
@@ -127,7 +128,7 @@ def plot_probability_maps(network_output, image=None, path=None):
     path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     os.makedirs(path)
 
-    class_num = 3
+    class_num = 18
     test = network_output['prob'][0][class_num]
 
     fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
