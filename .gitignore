@@ -6,3 +6,4 @@ plots/
 *.jpg
 *.jpeg
 images/
+.idea/
