@@ -41,13 +41,19 @@ CLASS_LIST = {0: "brick",
               22: "wood"}
 
 
+"""
+    Function performing material classification across a whole image of arbitrary size.
+    Inputs:
+        - im_path: path to image
+    Optional inputs:
+        - prototxt: name of .prototxt file
+        - caffemodel : name of .caffemodel file
+"""
 
 
-
-def classify(im_path, model_path):
+def classify(im_path, prototxt="models/deploy-googlenet-conv.prototxt", caffemodel="models/minc-googlenet-conv.caffemodel"):
     # Load network
-    net_full_conv = caffe.Net(model_path + '/deploy-googlenet-conv.prototxt',
-                              model_path + '/minc-googlenet-conv.caffemodel', caffe.TEST)
+    net_full_conv = caffe.Net(prototxt, caffemodel, caffe.TEST)
 
     im = caffe.io.load_image(im_path)
     print "im shape: " + str(im.shape[0])
@@ -210,15 +216,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-i", "--image", type=str, help="path to image to be classified")
-    parser.add_argument("-m", "--model", type=str, help="path to directory containing .caffemodel and .prototxt files")
+    parser.add_argument("-m", "--model", type=str, default="models/", help="path to directory containing .caffemodel and .prototxt files")
+    parser.add_argument("--prototxt", type=str, default="models/deploy-googlenet-conv.prototxt", help="path to prototxt file")
+    parser.add_argument("--caffemodel", type="str", default="models/minc-googlenet-conv.caffemodel", help="path to caffemodel file")
     parser.add_argument("-p", "--plot", type=bool, default=True, help="to plot results")
 
     args = parser.parse_args()
     im = args.image
-    model = args.model
+    model_dir = args.model
     plot = args.plot
 
-    output = classify(im, model)
+    output = classify(im)
 
     if plot is True:
         plot_output(output, im)
