@@ -218,7 +218,7 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--image", type=str, help="path to image to be classified")
     parser.add_argument("-m", "--model", type=str, default="models/", help="path to directory containing .caffemodel and .prototxt files")
     parser.add_argument("--prototxt", type=str, default="models/deploy-googlenet-conv.prototxt", help="path to prototxt file")
-    parser.add_argument("--caffemodel", type="str", default="models/minc-googlenet-conv.caffemodel", help="path to caffemodel file")
+    parser.add_argument("--caffemodel", type=str, default="models/minc-googlenet-conv.caffemodel", help="path to caffemodel file")
     parser.add_argument("-p", "--plot", type=bool, default=True, help="to plot results")
 
     args = parser.parse_args()
