@@ -99,7 +99,7 @@ def plot_output(network_output, image=None, path=None):
     class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
     ## Plot image and class map ##
-    fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
+    fig, axs = plt.subplots(ncols=2, figsize=(30,10))
     fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
     ax = axs[0]
     hb = ax.imshow(mpimg.imread(image))
@@ -121,7 +121,7 @@ def plot_output(network_output, image=None, path=None):
     plt.close()
 
     ## Plot image and probability map ##
-    fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
+    fig, axs = plt.subplots(ncols=2, figsize=(30,10))
     fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
     ax = axs[0]
     hb = ax.imshow(mpimg.imread(image))
