@@ -1,14 +1,14 @@
 #  Script for classifying an image at three scales as defined in the MINC paper
 #  Uses the classify method in full_image_classify.py
+#  Creates directory for resized images and results
 
 import caffe
-import matplotlib.pyplot as plt
 import sys
 import os
-#import full_image_classify
+import full_image_classify as minc_utils
 from scipy import misc
 import numpy as np
-
+from datetime import datetime
 
 """
     TODO: Function needs to be implemented which performs material classification on an image at three different
@@ -17,10 +17,28 @@ import numpy as np
     possibly give method another name which better reflects its function
 
     This method should call 'classify()' function from full_image_classify
+
+    Inputs:
+        - im_path: path to image to segment
+        - results: directory path to store results
 """
 
 
-#def classify():
+def segment(im_path, results):
+    im = misc.imread(im_path)  # load image
+    im_files = resize_image(im_path, results)  # perform image resizing
+
+    outputs = [minc_utils.classify(image) for image in im_files]  # Perform classification on images
+    all_prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]  # Get probability maps for each image
+    # Upsample each output probability map (to original image size??)
+    upsampled_prob_maps = np.array([[misc.imresize(prob_map, size=(im.shape[0], im.shape[1]), interp='bilinear') for prob_map in prob_maps] for prob_maps in all_prob_maps])
+    averaged_prob_maps = np.average(upsampled_prob_maps, axis=0)  # Average probability maps
+
+    [minc_utils.plot_probability_maps(prob_map, results) for prob_map in averaged_prob_maps]
+
+    print("stop")
+    # Upscale output to have fixed smaller dimension of 550
+
 
 
 """
@@ -29,23 +47,21 @@ import numpy as np
 """
 
 
-def resize_image(im_path):
-    scale = [1.0/np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
+def resize_image(im_path, results):
+    scales = {'1': 1.0/np.sqrt(2), '2': 1.0, '3': np.sqrt(2)}  # Define scales as per MINC paper
     im = misc.imread(im_path)  # load image
-    im1 = misc.imresize(im, size=scale[0], interp='bilinear')
-    im2 = misc.imresize(im, size=scale[1], interp='bilinear')
-    im3 = misc.imresize(im, size=scale[2], interp='bilinear')
-
-    dir, file_name = os.path.split(im_path)  # Get directory path and full file name of original image
+    _, file_name = os.path.split(im_path)  # Get directory path and full file name of original image
     im_name, ext = os.path.splitext(file_name)  # Get file name and extension of original image
 
-    # Use path info from original image to save resized images
-    misc.imsave(os.path.join(dir, (im_name + "_1" + ext)), im1)
-    misc.imsave(os.path.join(dir, (im_name + "_2" + ext)), im2)
-    misc.imsave(os.path.join(dir, (im_name + "_3" + ext)), im3)
+    # Save new images in tests directory
+    for num, scale in scales.iteritems():
+        misc.imsave(os.path.join(results, (im_name + num + ext)), misc.imresize(im, size=scale, interp='bilinear'))
 
+    return [os.path.join(results, (im_name + num + ext)) for num in scales.iterkeys()]  # return paths to new images
 
 if __name__ == "__main__":
     caffe.set_mode_gpu()
-    path = sys.argv[1]  # path to image to be segmented
-    resize_image(path)
+    image_path = sys.argv[1]  # path to image to be segmented
+    results_dir = os.path.join(os.getcwd(), 'results', datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))  # create directory for test results
+    os.makedirs(results_dir)
+    segment(image_path, results_dir)
