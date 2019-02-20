@@ -9,8 +9,6 @@
 
 import caffe
 import numpy as np
-import matplotlib
-matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import os
@@ -44,17 +42,16 @@ CLASS_LIST = {0: "brick",
               22: "wood"}
 
 
-"""
-    Function performing material classification across a whole image of arbitrary size.
-    Inputs:
-        - im_path: path to image
-    Optional inputs:
-        - prototxt: name of .prototxt file
-        - caffemodel : name of .caffemodel file
-"""
-
-
 def classify(im_path, prototxt="models/deploy-googlenet-conv.prototxt", caffemodel="models/minc-googlenet-conv.caffemodel"):
+    """
+        Function performing material classification across a whole image of arbitrary size.
+        Inputs:
+            - im_path: path to image
+        Optional inputs:
+            - prototxt: name of .prototxt file
+            - caffemodel : name of .caffemodel file
+    """
+
     # Load network
     net_full_conv = caffe.Net(prototxt, caffemodel, caffe.TEST)
 
@@ -77,21 +74,31 @@ def classify(im_path, prototxt="models/deploy-googlenet-conv.prototxt", caffemod
     return out
 
 
-"""
-    Function for plotting the output of classification model
-    Inputs:
-        - raw output from classification model
-        - optional original image to plot alongside classmap
-"""
+def plot_output(network_output, image=None, path=None):
+    """
+        Function for plotting the output of classification model
+            - Class map
+            - Confidence map
+            - All probability maps
+        Inputs:
+            - network_output: raw output from classification model
+            - image: optional original image to plot alongside classmap
+            - path: path to save plots to
+    """
 
+    if path is None:  # If no path is specified, create one for storing probability maps
+        path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+        os.makedirs(path)
+    else:
+        path = os.path.join(path, "plots")
+        os.makedirs(path)
 
-def plot_output(network_output, image=None):
     class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
     prob_map = network_output['prob'][0].max(axis=0)
     unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
     class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
-    # show net input and class labels (discrete numbers)
+    ## Plot image and class map ##
     fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
     fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
     ax = axs[0]
@@ -110,6 +117,10 @@ def plot_output(network_output, image=None):
     cb.set_ticklabels(get_tick_labels(unique_classes))
     cb.set_label('Class Numbers')
 
+    plt.savefig(path + "/class_map.jpg")
+    plt.close()
+
+    ## Plot image and probability map ##
     fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
     fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
     ax = axs[0]
@@ -122,24 +133,8 @@ def plot_output(network_output, image=None):
     cb = fig.colorbar(hb, ax=ax)
     cb.set_label('Probability')
 
-    plt.show(block=False)
+    plt.savefig(path + "/confidence_map.jpg")
     plt.close()
-
-
-"""
-    Function for plotting the probability maps for all 23 classes of the MINC dataset
-    Inputs:
-        - network output
-        - optional path to save plots to. Default is in folder 'plots' in current directory
-
-    This function is called from outside this script
-"""
-
-
-def plot_probability_maps(network_output, path=None):
-    if path is None:  # If no path is specified, create one for storing probability maps
-        path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
-    os.makedirs(path)
 
     for class_num in CLASS_LIST.keys():
         prob_map = network_output['prob'][0][class_num]
@@ -154,12 +149,47 @@ def plot_probability_maps(network_output, path=None):
         plt.close()
 
 
-"""
-    Function generating the corresponding class name for a class number outputted by network
-"""
+def plot_probability_maps(probability_maps, path=None):
+    """
+        Function for plotting probability maps
+        Inputs:
+            - probability_maps: probability map or list of probability maps
+            - path: optional path to save plots to. Default is in folder 'plots' in current directory
+
+        This function is called from outside this script
+    """
+
+    if path is None:  # If no path is specified, create one for storing probability maps
+        path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+        os.makedirs(path)
+    else:
+        path = os.path.join(path, "plots")
+        os.makedirs(path)
+
+    """
+    for prob_map in probability_maps:
+
+        fig, ax = plt.subplots()
+        hb = ax.imshow(prob_map, cmap='gray')
+        ax.set_title("Probability of class " + CLASS_LIST.get(class_num))
+        cb = fig.colorbar(hb, ax=ax)
+        cb.set_label('Probability')
+
+        plt.savefig(path + "/" + str(class_num) + ".jpg")
+        plt.close()
+    """
+
+def get_probability_maps(network_output):
+    """
+        Function which returns all probability maps in a network output
+    """
+    return [network_output['prob'][0][class_num] for class_num in CLASS_LIST.keys()]
 
 
 def get_class_names(class_numbers):
+    """
+        Function generating the corresponding class name for a class number outputted by network
+    """
     class_names = []
     for number in class_numbers:
         class_names.append(CLASS_LIST.get(number))
@@ -172,12 +202,10 @@ def get_class_names(class_numbers):
         return class_names
 
 
-"""
-    Function generating tick labels appropriate to each classified image
-"""
-
-
 def get_tick_labels(class_numbers):
+    """
+        Function generating tick labels appropriate to each classified image
+    """
     class_names = get_class_names(class_numbers)
     tick_labels = []
     for (number, name) in zip(class_numbers, class_names):
@@ -186,18 +214,16 @@ def get_tick_labels(class_numbers):
     return tick_labels
 
 
-"""
-    Function converting a matrix of numbers (corresponding to discrete, numerically unrelated class values) to a
-    matrix of numbers which can be plotted.
-    Need to assign numerical values of 0-len(unique_classes) in order to properly plot a class map
-        - if len(unique_classes) = 5 for example, instead of a prob_map containing a mix of numbers [0,4,16,19,21]
-          we would plot a modified_prob_map containing ndarray of numbers [0,1,2,3,4]
-        - Important to use the original unique_classes when generating tick labels! (in this case number corresponds
-          to a fixed class name)
-"""
-
-
 def modify_class_map(class_map):
+    """
+        Function converting a matrix of numbers (corresponding to discrete, numerically unrelated class values) to a
+        matrix of numbers which can be plotted.
+        Need to assign numerical values of 0-len(unique_classes) in order to properly plot a class map
+            - if len(unique_classes) = 5 for example, instead of a prob_map containing a mix of numbers [0,4,16,19,21]
+              we would plot a modified_prob_map containing ndarray of numbers [0,1,2,3,4]
+            - Important to use the original unique_classes when generating tick labels! (in this case number corresponds
+              to a fixed class name)
+    """
     unique_values = np.unique(class_map).tolist()  # list of unique values in class_map
     modified_values = range(0, len(unique_values))  # list in range 0 - len(unique_values)
     value_dict = {a: b for (a, b) in zip(unique_values, modified_values)}
@@ -231,4 +257,4 @@ if __name__ == "__main__":
     if plot is True:
         plot_output(output, im)
 
-    plot_probability_maps(output)
+    #plot_probability_maps(output)
