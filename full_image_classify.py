@@ -2,7 +2,10 @@
 #  Uses MINC GoogLeNet model modified to be fully convolutional
 #  Inputs:
 #       - path to image to classify
-#       - path to directory containing .caffemodel and .prototxt files (and categories.txt file)
+#  Optional inputs:
+#       - path to .prototxt file
+#       - path to .caffemodel file
+#       - option to plot results or not
 
 import caffe
 import numpy as np
@@ -108,6 +111,7 @@ def plot_output(network_output, image=None):
     cb.set_label('Class Numbers')
 
     fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
+    fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
     ax = axs[0]
     hb = ax.imshow(mpimg.imread(image))
     ax.set_title("Input image")
@@ -119,40 +123,36 @@ def plot_output(network_output, image=None):
     cb.set_label('Probability')
 
     plt.show(block=False)
+    plt.close()
 
 
 """
     Function for plotting the probability maps for all 23 classes of the MINC dataset
     Inputs:
         - network output
-        - optional path to image to include in plot
-        - optional path to save plots to. Default is in folder 'prob_maps' in current directory
+        - optional path to save plots to. Default is in folder 'plots' in current directory
+
+    This function is called from outside this script
 """
 
 
-def plot_probability_maps(network_output, image=None, path=None):
-    path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+def plot_probability_maps(network_output, path=None):
+    if path is None:  # If no path is specified, create one for storing probability maps
+        path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     os.makedirs(path)
 
-    class_num = 18
-    test = network_output['prob'][0][class_num]
+    for class_num in CLASS_LIST.keys():
+        prob_map = network_output['prob'][0][class_num]
 
-    fig, axs = plt.subplots(ncols=2, figsize=(20, 30))
-    ax = axs[0]
-    hb = ax.imshow(mpimg.imread(image))
-    ax.set_title("Input image")
+        fig, ax = plt.subplots()
+        hb = ax.imshow(prob_map, cmap='gray')
+        ax.set_title("Probability of class " + CLASS_LIST.get(class_num))
+        cb = fig.colorbar(hb, ax=ax)
+        cb.set_label('Probability')
 
-    ax = axs[1]
-    hb = ax.imshow(test, cmap='gray')
-    ax.set_title("Probability of class " + CLASS_LIST.get(class_num))
-    cb = fig.colorbar(hb, ax=ax)
-    cb.set_label('Probability')
+        plt.savefig(path + "/" + str(class_num) + ".jpg")
+        plt.close()
 
-    plt.show()
-
-    fig, ax = plt.subplots()
-    hb = ax.imshow(test, cmap='gray')
-    plt.savefig(path + "/" + str(class_num) + ".jpg")
 
 """
     Function generating the corresponding class name for a class number outputted by network
@@ -216,14 +216,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-i", "--image", type=str, help="path to image to be classified")
-    parser.add_argument("-m", "--model", type=str, default="models/", help="path to directory containing .caffemodel and .prototxt files")
+    parser.add_argument("-m", "--model", type=str, default="models/", help="path to directory containing .caffemodel and .prototxt files")  # Needed??
     parser.add_argument("--prototxt", type=str, default="models/deploy-googlenet-conv.prototxt", help="path to prototxt file")
     parser.add_argument("--caffemodel", type=str, default="models/minc-googlenet-conv.caffemodel", help="path to caffemodel file")
     parser.add_argument("-p", "--plot", type=bool, default=True, help="to plot results")
 
     args = parser.parse_args()
     im = args.image
-    model_dir = args.model
+    model_dir = args.model  # Is this needed anymore?
     plot = args.plot
 
     output = classify(im)
@@ -231,4 +231,4 @@ if __name__ == "__main__":
     if plot is True:
         plot_output(output, im)
 
-    plot_probability_maps(output, im)
+    plot_probability_maps(output)
