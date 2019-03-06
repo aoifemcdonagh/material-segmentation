@@ -19,6 +19,7 @@ Arguments:
 
    Installation guide for Caffe: https://github.com/BVLC/caffe/wiki/Ubuntu-16.04-Installation-Guide 
 
+
 * numpy 1.14.3+
 * matplotlib 2.2.3+
 * scipy 0.17.0+
