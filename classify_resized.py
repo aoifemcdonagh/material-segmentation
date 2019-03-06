@@ -29,12 +29,13 @@ def segment(im_path, results):
     im_files = resize_image(im_path, results)  # perform image resizing
 
     outputs = [minc_utils.classify(image) for image in im_files]  # Perform classification on images
-    all_prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]  # Get probability maps for each image
+    all_prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]  # Get probability maps for each class for each image
+
     # Upsample each output probability map (to original image size??)
     upsampled_prob_maps = np.array([[misc.imresize(prob_map, size=(im.shape[0], im.shape[1]), interp='bilinear') for prob_map in prob_maps] for prob_maps in all_prob_maps])
-    averaged_prob_maps = np.average(upsampled_prob_maps, axis=0)  # Average probability maps
+    averaged_prob_maps = np.average(upsampled_prob_maps, axis=0)  # Probability maps for each class, averaged from resized images probability maps
 
-    [minc_utils.plot_probability_maps(prob_map, results) for prob_map in averaged_prob_maps]
+    minc_utils.plot_probability_maps(averaged_prob_maps, results)
 
     print("stop")
     # Upscale output to have fixed smaller dimension of 550
