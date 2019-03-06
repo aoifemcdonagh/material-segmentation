@@ -153,7 +153,7 @@ def plot_probability_maps(probability_maps, path=None):
     """
         Function for plotting probability maps
         Inputs:
-            - probability_maps: probability map or list of probability maps
+            - probability_maps: probability maps for all classes
             - path: optional path to save plots to. Default is in folder 'plots' in current directory
 
         This function is called from outside this script
@@ -166,7 +166,7 @@ def plot_probability_maps(probability_maps, path=None):
         path = os.path.join(path, "plots")
         os.makedirs(path)
 
-    """
+    class_num = 0  # start at class 0
     for prob_map in probability_maps:
 
         fig, ax = plt.subplots()
@@ -177,7 +177,8 @@ def plot_probability_maps(probability_maps, path=None):
 
         plt.savefig(path + "/" + str(class_num) + ".jpg")
         plt.close()
-    """
+        class_num += 1
+
 
 def get_probability_maps(network_output):
     """
