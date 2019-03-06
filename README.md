@@ -16,6 +16,7 @@ Arguments:
 # Dependencies
 * python 2.7
 * caffe 1.0.0
+
    Installation guide for Caffe: https://github.com/BVLC/caffe/wiki/Ubuntu-16.04-Installation-Guide 
 
 * numpy 1.14.3+
