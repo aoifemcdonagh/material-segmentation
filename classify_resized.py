@@ -10,21 +10,21 @@ from scipy import misc
 import numpy as np
 from datetime import datetime
 
-"""
-    TODO: Function needs to be implemented which performs material classification on an image at three different
-    scales. What should be the output based on next stage of processing? Probability maps for a whole image? Separate
-    probability maps for each class for each image?
-    possibly give method another name which better reflects its function
-
-    This method should call 'classify()' function from full_image_classify
-
-    Inputs:
-        - im_path: path to image to segment
-        - results: directory path to store results
-"""
-
 
 def segment(im_path, results):
+    """
+        TODO: Function needs to be implemented which performs material classification on an image at three different
+        scales. What should be the output based on next stage of processing? Probability maps for a whole image? Separate
+        probability maps for each class for each image?
+        possibly give method another name which better reflects its function
+
+        This method should call 'classify()' function from full_image_classify
+
+        Inputs:
+            - im_path: path to image to segment
+            - results: directory path to store results
+    """
+
     im = misc.imread(im_path)  # load image
     im_files = resize_image(im_path, results)  # perform image resizing
 
@@ -41,14 +41,12 @@ def segment(im_path, results):
     # Upscale output to have fixed smaller dimension of 550
 
 
-
-"""
-    Function for resizing and saving an image
-    TODO: decide on paths to save images to wrt function of all other scripts
-"""
-
-
 def resize_image(im_path, results):
+    """
+        Function for resizing and saving an image
+        TODO: decide on paths to save images to wrt function of all other scripts
+    """
+    
     scales = {'1': 1.0/np.sqrt(2), '2': 1.0, '3': np.sqrt(2)}  # Define scales as per MINC paper
     im = misc.imread(im_path)  # load image
     _, file_name = os.path.split(im_path)  # Get directory path and full file name of original image
