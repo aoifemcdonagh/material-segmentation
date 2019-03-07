@@ -26,3 +26,9 @@ Arguments:
 1. `-i` or `--image` : path to image to perform material classfication on
 2. `-m` or `--model` : directory path containing `.caffemodel` and `.prototxt` files
 3. `-p` or `--plot` : set to `False` to avoid plotting results. Default is `True`
+
+## fc_to_conv.py
+Script for converting a GoogLeNet model to be fully convolutional (i.e. fully connected layers in the model are cast as convolutional layers). Assumes models are in the current working directory. Change model names/paths as necessary.
+
+## test_fully_conv.py
+Script for testing a fully conv network on image of arbitrary size. Change model paths as necessary. First script parameter is used to specify path to image to perform inference on.
