@@ -1,4 +1,4 @@
-# Taking model pretrained on MINC dataset and casting as fully connected CNN
+# Taking model pretrained on MINC dataset and casting as fully convolutional CNN
 # This is one step towards performing image segmentation based on material recognition as described in MINC paper
 # based on net_surgery caffe example
 
