@@ -1,8 +1,10 @@
-# Script to convert the fully connected layers of GoogLeNet to be convolutional
+# Script for converting a GoogLeNet model to be fully convolutional.
+# Fully connected layers in the model are cast as convolutional layers.
 
-# Assumes models are in the same directory and have specified names. Change model names/paths as necessary
+# Assumes models are in the current working directory. Change model names/paths as necessary.
 
 import caffe
+caffe.set_mode_gpu()
 
 net = caffe.Net('deploy-googlenet.prototxt', 'minc-googlenet.caffemodel', caffe.TEST)
 params = ['fc8-20']
