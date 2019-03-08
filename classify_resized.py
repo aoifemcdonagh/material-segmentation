@@ -5,11 +5,14 @@
 import caffe
 import sys
 import os
+import skimage
+
 import full_image_classify as minc_utils
 from scipy import misc
 import numpy as np
 from datetime import datetime
 
+SCALES = [1.0/np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
 
 def segment(im_path, results):
     """
@@ -29,11 +32,28 @@ def segment(im_path, results):
     im_files = resize_image(im_path, results)  # perform image resizing
 
     outputs = [minc_utils.classify(image) for image in im_files]  # Perform classification on images
-    all_prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]  # Get probability maps for each class for each image
+    prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]  # Get probability maps for each class for each image
 
     # Upsample each output probability map (to original image size??)
-    upsampled_prob_maps = np.array([[misc.imresize(prob_map, size=(im.shape[0], im.shape[1]), interp='bilinear') for prob_map in prob_maps] for prob_maps in all_prob_maps])
-    averaged_prob_maps = np.average(upsampled_prob_maps, axis=0)  # Probability maps for each class, averaged from resized images probability maps
+    #upsampled_prob_maps = np.array([[misc.imresize(prob_map, size=(im.shape[0], im.shape[1]), interp='bilinear') for prob_map in prob_maps] for prob_maps in prob_maps])
+
+    #upsampled_prob_maps_ski = np.array([[skimage.transform.rescale(prob_map, scale=(im.shape[0], im.shape[1]), mode='constant', cval=0) for prob_map in prob_maps] for prob_maps in images_prob_maps])
+    upsampled_prob_maps_ski = np.empty_like(prob_maps)
+
+    for prob_maps_single_scale in prob_maps:
+        for prob_map in prob_maps_single_scale:
+            i = prob_maps_single_scale.index(prob_map)  # Get index of current set of probability maps
+            j = prob_maps.index(prob_maps_single_scale)  # Get index of individual prob map in current set of prob maps
+            upsampled_prob_maps_ski[i][j] = skimage.transform.rescale(prob_map, scale=SCALES[i], mode='constant', cval=0)
+
+    for i in range(0, prob_maps.shape[0]):
+        image_prob_maps = prob_maps[i]
+        for j in range(0, image_prob_maps.shape[0]):
+            prob_map = image_prob_maps[j]
+            upsampled_prob_maps_ski[i][j] = \
+                skimage.transform.rescale(prob_map, scale=(im.shape[0], im.shape[1]), mode='constant', cval=0)
+
+    averaged_prob_maps = np.average(upsampled_prob_maps_ski, axis=0)  # Probability maps for each class, averaged from resized images probability maps
 
     minc_utils.plot_probability_maps(averaged_prob_maps, results)
 
@@ -46,17 +66,16 @@ def resize_image(im_path, results):
         Function for resizing and saving an image
         TODO: decide on paths to save images to wrt function of all other scripts
     """
-    
-    scales = {'1': 1.0/np.sqrt(2), '2': 1.0, '3': np.sqrt(2)}  # Define scales as per MINC paper
+
     im = misc.imread(im_path)  # load image
     _, file_name = os.path.split(im_path)  # Get directory path and full file name of original image
     im_name, ext = os.path.splitext(file_name)  # Get file name and extension of original image
 
     # Save new images in tests directory
-    for num, scale in scales.iteritems():
-        misc.imsave(os.path.join(results, (im_name + num + ext)), misc.imresize(im, size=scale, interp='bilinear'))
+    for scale in SCALES:
+        misc.imsave(os.path.join(results, (im_name + str(SCALES.index(scale)) + ext)), misc.imresize(im, size=scale, interp='bilinear'))
 
-    return [os.path.join(results, (im_name + num + ext)) for num in scales.iterkeys()]  # return paths to new images
+    return [os.path.join(results, (im_name + str(num) + ext)) for num in range(0, len(SCALES))]  # return paths to new images
 
 if __name__ == "__main__":
     caffe.set_mode_gpu()
