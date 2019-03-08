@@ -183,6 +183,7 @@ def plot_probability_maps(probability_maps, path=None):
 def get_probability_maps(network_output):
     """
         Function which returns all probability maps in a network output
+        Returns a list of probability maps (numpy arrays)
     """
     return [network_output['prob'][0][class_num] for class_num in CLASS_LIST.keys()]
 
