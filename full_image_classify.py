@@ -44,12 +44,12 @@ CLASS_LIST = {0: "brick",
 
 def classify(im_path, prototxt="models/deploy-googlenet-conv.prototxt", caffemodel="models/minc-googlenet-conv.caffemodel"):
     """
-        Function performing material classification across a whole image of arbitrary size.
-        Inputs:
-            - im_path: path to image
-        Optional inputs:
-            - prototxt: name of .prototxt file
-            - caffemodel : name of .caffemodel file
+    Function performing material classification across a whole image of arbitrary size.
+    Inputs:
+        - im_path: path to image
+    Optional inputs:
+        - prototxt: name of .prototxt file
+        - caffemodel : name of .caffemodel file
     """
 
     # Load network
@@ -76,14 +76,14 @@ def classify(im_path, prototxt="models/deploy-googlenet-conv.prototxt", caffemod
 
 def plot_output(network_output, image=None, path=None):
     """
-        Function for plotting the output of classification model
-            - Class map
-            - Confidence map
-            - All probability maps
-        Inputs:
-            - network_output: raw output from classification model
-            - image: optional original image to plot alongside classmap
-            - path: path to save plots to
+    Function for plotting the output of classification model
+        - Class map
+        - Confidence map
+        - All probability maps
+    Inputs:
+        - network_output: raw output from classification model
+        - image: optional original image to plot alongside classmap
+        - path: path to save plots to
     """
 
     if path is None:  # If no path is specified, create one for storing probability maps
@@ -151,12 +151,12 @@ def plot_output(network_output, image=None, path=None):
 
 def plot_probability_maps(probability_maps, path=None):
     """
-        Function for plotting probability maps
-        Inputs:
-            - probability_maps: probability maps for all classes
-            - path: optional path to save plots to. Default is in folder 'plots' in current directory
+    Function for plotting probability maps
+    Inputs:
+        - probability_maps: probability maps for all classes
+        - path: optional path to save plots to. Default is in folder 'plots' in current directory
 
-        This function is called from outside this script
+    This function is called from outside this script
     """
 
     if path is None:  # If no path is specified, create one for storing probability maps
@@ -182,15 +182,15 @@ def plot_probability_maps(probability_maps, path=None):
 
 def get_probability_maps(network_output):
     """
-        Function which returns all probability maps in a network output
-        Returns a list of probability maps (numpy arrays)
+    Function which returns all probability maps in a network output
+    Returns a list of probability maps (numpy arrays)
     """
     return [network_output['prob'][0][class_num] for class_num in CLASS_LIST.keys()]
 
 
 def get_class_names(class_numbers):
     """
-        Function generating the corresponding class name for a class number outputted by network
+    Function generating the corresponding class name for a class number outputted by network
     """
     class_names = []
     for number in class_numbers:
@@ -206,7 +206,7 @@ def get_class_names(class_numbers):
 
 def get_tick_labels(class_numbers):
     """
-        Function generating tick labels appropriate to each classified image
+    Function generating tick labels appropriate to each classified image
     """
     class_names = get_class_names(class_numbers)
     tick_labels = []
@@ -218,13 +218,13 @@ def get_tick_labels(class_numbers):
 
 def modify_class_map(class_map):
     """
-        Function converting a matrix of numbers (corresponding to discrete, numerically unrelated class values) to a
-        matrix of numbers which can be plotted.
-        Need to assign numerical values of 0-len(unique_classes) in order to properly plot a class map
-            - if len(unique_classes) = 5 for example, instead of a prob_map containing a mix of numbers [0,4,16,19,21]
-              we would plot a modified_prob_map containing ndarray of numbers [0,1,2,3,4]
-            - Important to use the original unique_classes when generating tick labels! (in this case number corresponds
-              to a fixed class name)
+    Function converting a matrix of numbers (corresponding to discrete, numerically unrelated class values) to a
+    matrix of numbers which can be plotted.
+    Need to assign numerical values of 0-len(unique_classes) in order to properly plot a class map
+        - if len(unique_classes) = 5 for example, instead of a prob_map containing a mix of numbers [0,4,16,19,21]
+          we would plot a modified_prob_map containing ndarray of numbers [0,1,2,3,4]
+        - Important to use the original unique_classes when generating tick labels! (in this case number corresponds
+          to a fixed class name)
     """
     unique_values = np.unique(class_map).tolist()  # list of unique values in class_map
     modified_values = range(0, len(unique_values))  # list in range 0 - len(unique_values)
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--model", type=str, default="models/", help="path to directory containing .caffemodel and .prototxt files")  # Needed??
     parser.add_argument("--prototxt", type=str, default="models/deploy-googlenet-conv.prototxt", help="path to prototxt file")
     parser.add_argument("--caffemodel", type=str, default="models/minc-googlenet-conv.caffemodel", help="path to caffemodel file")
-    parser.add_argument("-p", "--plot", type=bool, default=True, help="to plot results")
+    parser.add_argument("-p", "--plot", action='store_true', help="to plot results")
 
     args = parser.parse_args()
     im = args.image
