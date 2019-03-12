@@ -238,6 +238,18 @@ def modify_class_map(class_map):
 
     return modified_class_map
 
+def get_class_map(network_output):
+    """
+    function taking network output and returning a map of highest probability classes at each location
+    :param network_output:
+    :return:
+    """
+
+    class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+    prob_map = network_output['prob'][0].max(axis=0)
+    unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
+    class_map = modify_class_map(class_map)  # Modify class_map for plotting
+
 
 if __name__ == "__main__":
     caffe.set_mode_gpu()
