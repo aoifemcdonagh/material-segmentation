@@ -64,20 +64,6 @@ def plot_simple(im, data):
     plt.show()
 
 
-def upsample_bilinear(im_path):
-    """
-    Use model with BilinearFiller blob
-    :return:
-    """
-
-    im_files = resize.get_resized_images(im_path)  # perform image resizing
-    outputs = [minc_utils.classify(image,
-                                   prototxt="models/deploy-googlenet-conv-upsample.prototxt",
-                                   caffemodel="models/minc-googlenet-conv-upsample.caffemodel")
-               for image in im_files]  # Perform classification on images
-
-    prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]  # Get probability maps for each class for each image
-
 if __name__ == "__main__":
     caffe.set_mode_gpu()
     image_path = sys.argv[1]  # path to image to be segmented
