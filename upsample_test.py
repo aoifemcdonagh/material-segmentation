@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from scipy import misc
 import numpy as np
+import matplotlib.image as mpimg
+from datetime import datetime
 
 
 SCALES = [1.0/np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
@@ -19,9 +21,10 @@ def upsample(im_path):
     :return: scaled, upsampled and averaged probability maps for all classes
     """
 
-    im = misc.imread(im_path)  # load image
-    im_files = resize.resize_image(im_path)  # perform image resizing
-    outputs = [minc_utils.classify(image) for image in im_files]  # Perform classification on images
+    # Must load images with this method!
+    im = caffe.io.load_image(im_path)
+    resized_images = resize.get_resized_images(im)  # perform image resizing
+    outputs = [minc_utils.classify(image) for image in resized_images]  # Perform classification on images
     prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]  # Get probability maps for each class for each image
 
     # Upsampling probability maps to be same dimensions as original image
@@ -67,7 +70,7 @@ def upsample_bilinear(im_path):
     :return:
     """
 
-    im_files = resize.resize_image(im_path)  # perform image resizing
+    im_files = resize.get_resized_images(im_path)  # perform image resizing
     outputs = [minc_utils.classify(image,
                                    prototxt="models/deploy-googlenet-conv-upsample.prototxt",
                                    caffemodel="models/minc-googlenet-conv-upsample.caffemodel")
