@@ -24,9 +24,9 @@ def segment(im_path, results=None):
 
     This method should call 'classify()' function from full_image_classify
 
-    Inputs:
-        - im_path: path to image to segment
-        - results: directory path to store results
+    :param im_path: path to image to segment
+    :param results: directory path to store results
+    :return:
     """
 
     im = misc.imread(im_path)  # load image
