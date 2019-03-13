@@ -6,11 +6,8 @@ import skimage
 import full_image_classify as minc_utils
 import classify_resized as resize
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-from scipy import misc
 import numpy as np
 import matplotlib.image as mpimg
-from datetime import datetime
 
 
 SCALES = [1.0/np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
@@ -21,8 +18,7 @@ def upsample(im_path):
     :return: scaled, upsampled and averaged probability maps for all classes
     """
 
-    # Must load images with this method!
-    im = caffe.io.load_image(im_path)
+    im = caffe.io.load_image(im_path)  # Must load images with this method!
     resized_images = resize.get_resized_images(im)  # perform image resizing
     outputs = [minc_utils.classify(image) for image in resized_images]  # Perform classification on images
     prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]  # Get probability maps for each class for each image
