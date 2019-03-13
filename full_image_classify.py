@@ -37,7 +37,7 @@ def classify(im, prototxt="models/deploy-googlenet-conv.prototxt", caffemodel="m
     """
     Function performing material classification across a whole image of arbitrary size.
 
-    :param im: pre-loaded/read image
+    :param im: image preloaded using caffe.io.load_image()
     :param prototxt: name of .prototxt file
     :param caffemodel: name of .caffemodel file
     :return: network output
