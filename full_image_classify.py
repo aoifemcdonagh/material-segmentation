@@ -1,16 +1,7 @@
-#  Script to classify material in a full image.
-#  Uses MINC GoogLeNet model modified to be fully convolutional
-#  Inputs:
-#       - path to image to classify
-#  Optional inputs:
-#       - path to .prototxt file
-#       - path to .caffemodel file
-#       - option to plot results or not
-
 import caffe
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+from scipy import misc
 import os
 import argparse
 from datetime import datetime
@@ -42,20 +33,19 @@ CLASS_LIST = {0: "brick",
               22: "wood"}
 
 
-def classify(im_path, prototxt="models/deploy-googlenet-conv.prototxt", caffemodel="models/minc-googlenet-conv.caffemodel"):
+def classify(im, prototxt="models/deploy-googlenet-conv.prototxt", caffemodel="models/minc-googlenet-conv.caffemodel"):
     """
     Function performing material classification across a whole image of arbitrary size.
-    Inputs:
-        - im_path: path to image
-    Optional inputs:
-        - prototxt: name of .prototxt file
-        - caffemodel : name of .caffemodel file
+
+    :param im: pre-loaded/read image
+    :param prototxt: name of .prototxt file
+    :param caffemodel: name of .caffemodel file
+    :return: network output
     """
 
     # Load network
     net_full_conv = caffe.Net(prototxt, caffemodel, caffe.TEST)
 
-    im = caffe.io.load_image(im_path)
     print "im shape: " + str(im.shape[0])
 
     print net_full_conv.blobs['data'].data.shape
@@ -82,7 +72,7 @@ def plot_output(network_output, image=None, path=None):
         - All probability maps
 
     :param network_output: raw output from classification model
-    :param image: optional original image to plot alongside classmap
+    :param image: pre-loaded image to plot alongside classmap
     :param path: path to save plots to
     :return:
     """
@@ -103,7 +93,7 @@ def plot_output(network_output, image=None, path=None):
     fig, axs = plt.subplots(ncols=2, figsize=(30,10))
     fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
     ax = axs[0]
-    hb = ax.imshow(mpimg.imread(image))
+    hb = ax.imshow(image)
     ax.set_title("Input image")
 
     ax = axs[1]
@@ -125,7 +115,7 @@ def plot_output(network_output, image=None, path=None):
     fig, axs = plt.subplots(ncols=2, figsize=(30,10))
     fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
     ax = axs[0]
-    hb = ax.imshow(mpimg.imread(image))
+    hb = ax.imshow(image)
     ax.set_title("Input image")
 
     ax = axs[1]
@@ -149,6 +139,16 @@ def plot_output(network_output, image=None, path=None):
 
         plt.savefig(path + "/" + str(class_num) + ".jpg")
         plt.close()
+
+
+#def plot_class_map(network_output, image=None, path=None):
+    """
+    Function for plotting only the class map from classification output
+    :param network_output:
+    :param image:
+    :param path:
+    :return:
+    """
 
 
 def plot_probability_maps(probability_maps, path=None):
@@ -240,6 +240,7 @@ def modify_class_map(class_map):
 
     return modified_class_map
 
+
 def get_class_map(network_output):
     """
     function taking network output and returning a map of highest probability classes at each location
@@ -253,6 +254,17 @@ def get_class_map(network_output):
 
 
 if __name__ == "__main__":
+    """
+    Script to classify material in a full image.
+    Uses MINC GoogLeNet model modified to be fully convolutional
+    Inputs:
+         - path to image to classify
+    Optional inputs:
+         - path to .prototxt file
+         - path to .caffemodel file
+         - option to plot results or not
+    """
+
     caffe.set_mode_gpu()
     parser = argparse.ArgumentParser()
 
@@ -263,13 +275,14 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--plot", action='store_true', help="to plot results")
 
     args = parser.parse_args()
-    im = args.image
+    im_path = args.image
     model_dir = args.model  # Is this needed anymore?
     plot = args.plot
 
-    output = classify(im)
+    image = misc.imread(im_path)  # load image
+    output = classify(image)
 
     if plot is True:
-        plot_output(output, im)
+        plot_output(output, image)
 
     #plot_probability_maps(output)
