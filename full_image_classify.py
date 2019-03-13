@@ -80,10 +80,11 @@ def plot_output(network_output, image=None, path=None):
         - Class map
         - Confidence map
         - All probability maps
-    Inputs:
-        - network_output: raw output from classification model
-        - image: optional original image to plot alongside classmap
-        - path: path to save plots to
+
+    :param network_output: raw output from classification model
+    :param image: optional original image to plot alongside classmap
+    :param path: path to save plots to
+    :return:
     """
 
     if path is None:  # If no path is specified, create one for storing probability maps
