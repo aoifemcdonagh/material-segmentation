@@ -22,6 +22,8 @@ def segment(im_path, results=None):
     probability maps for each class for each image?
     possibly give method another name which better reflects its function
 
+    This function currently does too much??
+
     This method should call 'classify()' function from full_image_classify
 
     :param im_path: path to image to segment
@@ -29,58 +31,55 @@ def segment(im_path, results=None):
     :return:
     """
 
-    im = misc.imread(im_path)  # load image
-    im_files = resize_image(im_path, results)  # perform image resizing
+    orig_image = misc.imread(im_path)  # load image
 
-    outputs = [minc_utils.classify(image) for image in im_files]  # Perform classification on images
-    prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]  # Get probability maps for each class for each image
+    resized_images = get_resized_images(orig_image)  # Resize original images
+
+    outputs = [minc_utils.classify(image) for image in resized_images]  # Perform classification on images
+
+    av_prob_maps = prepare_prob_maps(orig_image, outputs)
+
+    minc_utils.plot_probability_maps(av_prob_maps, results)
+
+
+def prepare_prob_maps(im, outputs):
+    """
+    :param im: original image (needed for shape)
+    :param outputs: List of outputs from
+    :return: Probability maps for each class, averaged from resized images probability maps
+    """
+
+    # Get probability maps for each class for each image
+    prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]
 
     # Upsampling probability maps to be same dimensions as original image
     # np.array so that they can be averaged later
     upsampled_prob_maps = np.array([[skimage.transform.resize(prob_map,
-                                                                  output_shape=(im.shape[0], im.shape[1]),
-                                                                  mode='constant',
-                                                                  cval=0,
-                                                                  preserve_range=True)
-                                        for prob_map in prob_maps_single_image]
-                                        for prob_maps_single_image in prob_maps])
+                                                              output_shape=(im.shape[0], im.shape[1]),
+                                                              mode='constant',
+                                                              cval=0,
+                                                              preserve_range=True)
+                                     for prob_map in prob_maps_single_image]
+                                    for prob_maps_single_image in prob_maps])
 
     # Probability maps for each class, averaged from resized images probability maps
     averaged_prob_maps = np.average(upsampled_prob_maps, axis=0)
 
-    minc_utils.plot_probability_maps(averaged_prob_maps, results)
-
-    # Upscale output to have fixed smaller dimension of 550
+    return averaged_prob_maps
 
 
-def resize_image(im_path, results=None):
+def get_resized_images(im):
     """
-    Function for resizing and saving an image
+    Function for resizing an image to scales as defined in MINC paper
+    Not saving images anymore, just returning them for processing
 
-    :return: paths to resized images
-
-    TODO: decide on paths to save images to wrt function of all other scripts
+    :param im: pre-loaded image
+    :return: resized images
     """
 
-    if results is None:  # create directory path for test results if none specified
-        results = os.path.join(os.getcwd(), 'results', datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    # Return the resized images
 
-    os.makedirs(results)  # Create the results directory
-
-    im = misc.imread(im_path)  # load image
-    _, file_name = os.path.split(im_path)  # Get directory path and full file name of original image
-    im_name, ext = os.path.splitext(file_name)  # Get file name and extension of original image
-
-    im_paths = []  # Empty list to store paths
-
-    for scale in SCALES:  # Resize input image at specified scales
-        # Note that resized images labelled with "0,1,2.." instead of the actual scale b/c scale is float
-        im_paths.append(os.path.join(results, (im_name + str(SCALES.index(scale)) + ext)))  # Create path to save image
-        resized_image = misc.imresize(im, size=scale, interp='bilinear')  # Resize image
-        misc.imsave(im_paths[SCALES.index(scale)], resized_image)  # Save resized image
-
-    # Return the paths to resized images
-    return im_paths
+    return [skimage.transform.rescale(im, scale, mode='constant', cval=0) for scale in SCALES]
 
 
 if __name__ == "__main__":
