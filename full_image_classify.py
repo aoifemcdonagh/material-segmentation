@@ -120,7 +120,7 @@ def plot_output(network_output, image=None, path=None):
     plt.savefig(path + "/class_map.jpg")
     plt.close()
 
-    ## Plot image and probability map ##
+    ## Plot image and confidence map (i.e. highest prob at each location, irrespective of class) ##
     fig, axs = plt.subplots(ncols=2, figsize=(30,10))
     fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
     ax = axs[0]
@@ -136,6 +136,7 @@ def plot_output(network_output, image=None, path=None):
     plt.savefig(path + "/confidence_map.jpg")
     plt.close()
 
+    # Plot probability maps for all classes
     for class_num in CLASS_LIST.keys():
         prob_map = network_output['prob'][0][class_num]
 
@@ -241,14 +242,13 @@ def modify_class_map(class_map):
 def get_class_map(network_output):
     """
     function taking network output and returning a map of highest probability classes at each location
+    Map of class names
+    Used for estimating average absorption coeff?
     :param network_output:
     :return:
     """
 
-    class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
-    prob_map = network_output['prob'][0].max(axis=0)
-    unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
-    class_map = modify_class_map(class_map)  # Modify class_map for plotting
+    return network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
 
 
 if __name__ == "__main__":
