@@ -141,15 +141,37 @@ def plot_output(network_output, image=None, path=None):
         plt.close()
 
 
-#def plot_class_map(network_output, image=None, path=None):
+def plot_class_map(network_output):
     """
     Function for plotting only the class map from classification output
     :param network_output:
-    :param image:
-    :param path:
     :return:
     """
 
+    if network_output is dict:  # If the input value is an unmodified 'network output'
+        class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+    else:  # if average probability maps are passed in in case of upsampling & averaging
+        class_map = network_output.argmax(axis=0)
+
+    unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
+    class_map = modify_class_map(class_map)  # Modify class_map for plotting
+
+
+    fig, ax = plt.subplots(figsize=(30, 10))
+    fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
+
+    ax.set_title("Class at each location")
+    hb = ax.imshow(class_map, cmap=plt.get_cmap("gist_rainbow", len(unique_classes)))
+
+    step_length = float(len(unique_classes) - 1) / float(
+        len(unique_classes))  # Define the step length between ticks for colorbar.
+    loc = np.arange(step_length / 2, len(unique_classes), step_length) if len(unique_classes) > 1 else [
+        0.0]  # Shift each tick location so that the label is in the middle
+    cb = fig.colorbar(hb, ticks=loc)
+    cb.set_ticklabels(get_tick_labels(unique_classes))
+    cb.set_label('Class Numbers')
+
+    plt.show()
 
 def plot_probability_maps(probability_maps, path=None):
     """
@@ -235,9 +257,6 @@ def modify_class_map(class_map):
     modified_class_map = [[value_dict.get(class_map[i][j]) for j in range(0, class_map.shape[1])] for i in
                           range(0, class_map.shape[0])]
 
-    print("Modified class map")
-    print(modified_class_map)
-
     return modified_class_map
 
 
@@ -279,10 +298,10 @@ if __name__ == "__main__":
     model_dir = args.model  # Is this needed anymore?
     plot = args.plot
 
-    image = misc.imread(im_path)  # load image
+    image = caffe.io.load_image(im_path)  # must load image using caffe.io.load_image()
     output = classify(image)
 
     if plot is True:
-        plot_output(output, image)
+        plot_class_map(output, image)
 
     #plot_probability_maps(output)
