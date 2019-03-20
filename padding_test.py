@@ -15,6 +15,17 @@ def add_padding(im, pad):
     return np.pad(im, pad_width=((pad, pad), (pad, pad), (0, 0)), mode='symmetric')
 
 
+def remove_padding(im, pad):
+    """
+    Function for removing padding from an image.
+    :param im: image to remove padding from
+    :param pad: number of pixels of padding to remove
+    :return:
+    """
+
+    return im[pad:-pad, pad:-pad]
+
+
 def plot(im):
     """
     Plot an image
@@ -34,5 +45,8 @@ if __name__ == "__main__":
     padding = int(sys.argv[2])  # number of pixels to pad
 
     image = caffe.io.load_image(image_path)
-    padded_image = add_padding(image, padding)
+    padded_image = add_padding(image, padding)  # Test adding padding
     plot(padded_image)
+
+    padding_removed = remove_padding(padded_image, padding)  # Test if padding removal works
+    plot(padding_removed)
