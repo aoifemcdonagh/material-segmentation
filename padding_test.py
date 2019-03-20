@@ -1,23 +1,18 @@
 import caffe
 import sys
-import os
-import skimage
-
-import full_image_classify as minc_utils
-import classify_resized as resize
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.image as mpimg
 
 
-def add_padding(im):
+def add_padding(im, pad):
     """
     Function to add padding to an image
     :param im:
+    :param pad: number of pixels to pad around image
     :return:
     """
 
-    return np.pad(im, pad_width=((50, 50), (100, 100), (0, 0)), mode='symmetric')
+    return np.pad(im, pad_width=((pad, pad), (pad, pad), (0, 0)), mode='symmetric')
 
 
 def plot(im):
@@ -36,7 +31,8 @@ def plot(im):
 if __name__ == "__main__":
     caffe.set_mode_gpu()
     image_path = sys.argv[1]  # path to image to be segmented
+    padding = int(sys.argv[2])  # number of pixels to pad
 
     image = caffe.io.load_image(image_path)
-
-    plot(add_padding(image))
+    padded_image = add_padding(image, padding)
+    plot(padded_image)
