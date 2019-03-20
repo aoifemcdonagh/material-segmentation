@@ -1,7 +1,5 @@
 import caffe
 import numpy as np
-import argparse
-import minc_plotting as minc_plot
 
 
 #  Global dictionary containing class number : name pairs
@@ -92,6 +90,8 @@ if __name__ == "__main__":
          - path to .caffemodel file
          - option to plot results or not
     """
+    import argparse
+    import minc_plotting as minc_plot
 
     caffe.set_mode_gpu()
     parser = argparse.ArgumentParser()
