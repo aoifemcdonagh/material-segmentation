@@ -82,6 +82,27 @@ def modify_class_map(class_map):
     return modified_class_map
 
 
+def plot_confidence_map(network_output):
+    """
+    Function for plotting the confidence map from classified image
+    :param network_output:
+    :return:
+    """
+
+    if type(network_output) is dict:  # If the input value is an unmodified 'network output'
+        confidence_map = network_output['prob'][0].max(axis=0)  # Get highest probability class at each location
+    else:  # if average probability maps are passed in in case of upsampling & averaging
+        confidence_map = network_output.max(axis=0)
+
+    fig, ax = plt.subplots()
+
+    ax.set_title("highest probability at each location (irrespective of class)")
+    hb = ax.imshow(confidence_map)
+    cb = fig.colorbar(hb, ax=ax)
+    cb.set_label('Probability')
+
+    plt.show()
+
 def plot_class_map(network_output):
     """
     Function for plotting only the class map from classification output
