@@ -2,8 +2,6 @@
 #  Uses the classify method in minc_classify.py
 #  Creates directory for resized images and results
 
-import caffe
-import sys
 import skimage
 import minc_classify as minc_utils
 import minc_plotting as minc_plot
@@ -12,7 +10,7 @@ import numpy as np
 SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
 
 
-def segment(im, results=None, pad=0):
+def segment(im, pad=0):
     """
     TODO: Function needs to be implemented which performs material classification on an image at three different
     scales. What should be the output based on next stage of processing? Probability maps for a whole image? Separate
@@ -24,7 +22,7 @@ def segment(im, results=None, pad=0):
     This method should call 'classify()' function from full_image_classify
 
     :param im: image to segment
-    :param results: optional directory path to store results
+    :param pad: number of pixels of padding to add
     :return:
     """
 
@@ -33,11 +31,10 @@ def segment(im, results=None, pad=0):
 
     outputs = [minc_utils.classify(image) for image in resized_images]  # Perform classification on images
 
-    av_prob_maps = get_average_prob_maps(outputs, orig_image, pad)
+    average_prob_maps = get_average_prob_maps(outputs, orig_image, pad)
 
-    #minc_plot.plot_probability_maps(av_prob_maps, results)
-    minc_plot.plot_class_map(av_prob_maps)
-    minc_plot.plot_confidence_map(av_prob_maps)
+    return average_prob_maps
+
 
 def get_average_prob_maps(network_outputs, im, pad=0):
     """
@@ -118,7 +115,19 @@ def remove_padding(im, pad=0):
 
 
 if __name__ == "__main__":
+    import os
+    import sys
+    import caffe
+    from datetime import datetime
+
     caffe.set_mode_gpu()
     image_path = sys.argv[1]  # path to image to be segmented
     orig_image = caffe.io.load_image(image_path)  # load image
-    segment(orig_image, pad=50)
+    results = segment(orig_image, pad=0)
+
+    results_dir = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    os.mkdir(results_dir)
+
+    # minc_plot.plot_probability_maps(av_prob_maps, results)
+    minc_plot.plot_class_map(results, save=True, path=results_dir)
+    minc_plot.plot_confidence_map(results,save=True, path=results_dir)
