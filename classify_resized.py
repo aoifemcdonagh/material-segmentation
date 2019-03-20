@@ -35,9 +35,9 @@ def segment(im, results=None, pad=0):
 
     av_prob_maps = get_average_prob_maps(outputs, orig_image, pad)
 
-    minc_plot.plot_probability_maps(av_prob_maps, results)
+    #minc_plot.plot_probability_maps(av_prob_maps, results)
     minc_plot.plot_class_map(av_prob_maps)
-
+    minc_plot.plot_confidence_map(av_prob_maps)
 
 def get_average_prob_maps(network_outputs, im, pad=0):
     """
@@ -121,4 +121,4 @@ if __name__ == "__main__":
     caffe.set_mode_gpu()
     image_path = sys.argv[1]  # path to image to be segmented
     orig_image = caffe.io.load_image(image_path)  # load image
-    segment(orig_image)
+    segment(orig_image, pad=50)
