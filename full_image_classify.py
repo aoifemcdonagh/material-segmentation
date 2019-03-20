@@ -148,7 +148,7 @@ def plot_class_map(network_output):
     :return:
     """
 
-    if network_output is dict:  # If the input value is an unmodified 'network output'
+    if type(network_output) is dict:  # If the input value is an unmodified 'network output'
         class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
     else:  # if average probability maps are passed in in case of upsampling & averaging
         class_map = network_output.argmax(axis=0)
@@ -157,8 +157,7 @@ def plot_class_map(network_output):
     class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
 
-    fig, ax = plt.subplots(figsize=(30, 10))
-    fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
+    fig, ax = plt.subplots()
 
     ax.set_title("Class at each location")
     hb = ax.imshow(class_map, cmap=plt.get_cmap("gist_rainbow", len(unique_classes)))
@@ -172,6 +171,7 @@ def plot_class_map(network_output):
     cb.set_label('Class Numbers')
 
     plt.show()
+
 
 def plot_probability_maps(probability_maps, path=None):
     """
@@ -302,6 +302,6 @@ if __name__ == "__main__":
     output = classify(image)
 
     if plot is True:
-        plot_class_map(output, image)
+        plot_class_map(output)
 
     #plot_probability_maps(output)
