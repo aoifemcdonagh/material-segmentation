@@ -1,9 +1,9 @@
 import caffe
 import sys
-import os
 import skimage
 
-import full_image_classify as minc_utils
+import minc_classify as minc_utils
+import minc_plotting as minc_plot
 import classify_resized as resize
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,11 +17,11 @@ def upsample(im):
     :return: scaled, upsampled and averaged probability maps for all classes
     """
 
-    resized_images = resize.get_resized_images(im)  # perform image resizing
+    resized_images = resize.resize_images(im)  # perform image resizing
     outputs = [minc_utils.classify(image) for image in resized_images]  # Perform classification on images
     prob_maps = [minc_utils.get_probability_maps(out) for out in outputs]  # Get probability maps for each class for each image
 
-    # Upsampling probability maps to be same dimensions as original image
+    # Upsampling probability maps to be same dimensions as original image (plus padding)
     upsampled_prob_maps = np.array([[skimage.transform.resize(prob_map,
                                                                   output_shape=(im.shape[0], im.shape[1]),
                                                                   mode='constant',
@@ -58,27 +58,40 @@ def plot_simple(im, data):
     plt.show()
 
 
-def add_padding(im):
+def add_padding(im, pad):
     """
     Function for padding image before classification
     :param im: image (preloaded with caffe.io.load_image)
     :return: image with padding
     """
 
-    return np.pad(im, pad_width=((50, 50), (100, 100), (0, 0)), mode='symmetric')
+    return np.pad(im, pad_width=((pad, pad), (pad, pad), (0, 0)), mode='symmetric')
+
+
+def remove_padding(im, pad):
+    """
+    Function for removing padding from an image
+    :param im: image to remove padding from
+    :param pad: number of pixels of padding to remove
+    :return:
+    """
+
+    return im[pad:-pad, pad:-pad]
 
 
 if __name__ == "__main__":
     caffe.set_mode_gpu()
     image_path = sys.argv[1]  # path to image to be segmented
+    padding = int(sys.argv[2])  # number of pixels to pad
     image = caffe.io.load_image(image_path)  # Must load images with this method!
+    padded_image = add_padding(image, padding)
 
-    av_prob_maps = upsample(add_padding(image))
+    av_prob_maps = upsample(padded_image)
 
     confidence_map = av_prob_maps.max(axis=0)
     plot_simple(image_path, confidence_map)
 
-    minc_utils.plot_class_map(av_prob_maps)
+    minc_plot.plot_class_map(av_prob_maps)
 
 
 
