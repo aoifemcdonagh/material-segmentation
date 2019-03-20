@@ -82,10 +82,12 @@ def modify_class_map(class_map):
     return modified_class_map
 
 
-def plot_confidence_map(network_output):
+def plot_confidence_map(network_output, save=False, path=None):
     """
     Function for plotting the confidence map from classified image
     :param network_output:
+    :param save:
+    :param path:
     :return:
     """
 
@@ -94,19 +96,29 @@ def plot_confidence_map(network_output):
     else:  # if average probability maps are passed in in case of upsampling & averaging
         confidence_map = network_output.max(axis=0)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(15,8))
 
     ax.set_title("highest probability at each location (irrespective of class)")
     hb = ax.imshow(confidence_map)
     cb = fig.colorbar(hb, ax=ax)
     cb.set_label('Probability')
 
-    plt.show()
+    if save is True:  # If user chooses to save plot, do so
+        if path is None:  # If no path is specified, create one for storing probability maps
+            path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+            os.makedirs(path)
 
-def plot_class_map(network_output):
+        plt.savefig(path + "/confidence_map.jpg")
+
+    else:  # Just show the plot
+        plt.show()
+
+def plot_class_map(network_output, save=False, path=None):
     """
     Function for plotting only the class map from classification output
     :param network_output:
+    :param save:
+    :param path:
     :return:
     """
 
@@ -119,7 +131,7 @@ def plot_class_map(network_output):
     class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(15,8))
 
     ax.set_title("Class at each location")
     hb = ax.imshow(class_map, cmap=plt.get_cmap("gist_rainbow", len(unique_classes)))
@@ -132,7 +144,16 @@ def plot_class_map(network_output):
     cb.set_ticklabels(get_tick_labels(unique_classes))
     cb.set_label('Class Numbers')
 
-    plt.show()
+
+    if save is True:  # If user chooses to save plot, do so
+        if path is None:  # If no path is specified, create one for storing probability maps
+            path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+            os.makedirs(path)
+
+        plt.savefig(path + "/class_map.jpg")
+
+    else:  # Just show the plot
+        plt.show()
 
 
 def plot_probability_maps(probability_maps, path=None):
