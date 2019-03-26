@@ -4,7 +4,7 @@ import skimage
 
 import minc_classify as minc_utils
 import minc_plotting as minc_plot
-import classify_resized as resize
+import segment as resize
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.image as mpimg
@@ -84,9 +84,9 @@ if __name__ == "__main__":
     image_path = sys.argv[1]  # path to image to be segmented
     padding = int(sys.argv[2])  # number of pixels to pad
     image = caffe.io.load_image(image_path)  # Must load images with this method!
-    padded_image = add_padding(image, padding)
+    #image = add_padding(image, padding)  # add padding
 
-    av_prob_maps = upsample(padded_image)
+    av_prob_maps = upsample(image)
 
     confidence_map = av_prob_maps.max(axis=0)
     plot_simple(image_path, confidence_map)
