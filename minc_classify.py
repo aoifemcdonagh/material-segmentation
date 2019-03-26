@@ -38,13 +38,9 @@ def classify(im, prototxt="models/deploy-googlenet-conv.prototxt", caffemodel="m
     :return: network output
     """
 
-    # Load network
-    net_full_conv = caffe.Net(prototxt, caffemodel, caffe.TEST)
-
-    print "im shape: " + str(im.shape[0])
-
+    net_full_conv = caffe.Net(prototxt, caffemodel, caffe.TEST)  # Load network
     print net_full_conv.blobs['data'].data.shape
-    net_full_conv.blobs['data'].reshape(1, 3, im.shape[0], im.shape[1])
+    net_full_conv.blobs['data'].reshape(1, 3, im.shape[0], im.shape[1])  # Reshape the input layer to image size
     print net_full_conv.blobs['data'].data.shape
 
     transformer = caffe.io.Transformer({'data': net_full_conv.blobs['data'].data.shape})
@@ -92,25 +88,25 @@ if __name__ == "__main__":
     """
     import argparse
     import minc_plotting as minc_plot
+    import os
+    from datetime import datetime
 
     caffe.set_mode_gpu()
+    
     parser = argparse.ArgumentParser()
-
     parser.add_argument("-i", "--image", type=str, help="path to image to be classified")
-    parser.add_argument("-m", "--model", type=str, default="models/", help="path to directory containing .caffemodel and .prototxt files")  # Needed??
     parser.add_argument("--prototxt", type=str, default="models/deploy-googlenet-conv.prototxt", help="path to prototxt file")
     parser.add_argument("--caffemodel", type=str, default="models/minc-googlenet-conv.caffemodel", help="path to caffemodel file")
     parser.add_argument("-p", "--plot", action='store_true', help="to plot results")
-
     args = parser.parse_args()
-    im_path = args.image
-    model_dir = args.model  # Is this needed anymore?
-    plot = args.plot
 
-    image = caffe.io.load_image(im_path)  # must load image using caffe.io.load_image()
-    output = classify(image)
+    image = caffe.io.load_image(args.image)  # must load image using caffe.io.load_image()
+    output = classify(image, args.prototxt, args.caffemodel)
 
-    if plot is True:
-        minc_plot.plot_class_map(output)
+    if args.plot is True:
+        results_dir = os.path.join(os.getcwd(), "plots", ("no_upsampling_" + datetime.now().strftime('%Y-%m-%d_%H-%M-%S')))
+        os.mkdir(results_dir)
+        minc_plot.plot_class_map(output, save=True, path=results_dir)
+        minc_plot.plot_confidence_map(output, save=True, path=results_dir)
 
     #plot_probability_maps(output)
