@@ -31,7 +31,7 @@ def segment(im, pad=0):
 
     outputs = [minc_utils.classify(image) for image in resized_images]  # Perform classification on images
 
-    average_prob_maps = get_average_prob_maps(outputs, orig_image, pad)
+    average_prob_maps = get_average_prob_maps(outputs, im, pad)
 
     return average_prob_maps
 
@@ -123,9 +123,10 @@ if __name__ == "__main__":
     caffe.set_mode_gpu()
     image_path = sys.argv[1]  # path to image to be segmented
     orig_image = caffe.io.load_image(image_path)  # load image
-    results = segment(orig_image, pad=0)
+    padding = 0
+    results = segment(orig_image, pad=padding)
 
-    results_dir = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    results_dir = os.path.join(os.getcwd(), "plots", ("padding_test_" + str(padding) + "_" + datetime.now().strftime('%Y-%m-%d_%H-%M-%S')))
     os.mkdir(results_dir)
 
     # minc_plot.plot_probability_maps(av_prob_maps, results)
