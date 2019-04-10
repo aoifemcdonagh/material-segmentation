@@ -26,7 +26,7 @@ transformer.set_raw_scale('data', 255.0)
 transformed_image = transformer.preprocess('data', im)
 
 out = net.forward_all(data=np.asarray([transformer.preprocess('data', im)]))
-print out['prob'][0].argmax(axis=0)
+print(out['prob'][0].argmax(axis=0))
 
 plt.imshow(im)
 plt.show()
