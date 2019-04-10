@@ -39,9 +39,9 @@ def classify(im, prototxt="models/deploy-googlenet-conv.prototxt", caffemodel="m
     """
 
     net_full_conv = caffe.Net(prototxt, caffemodel, caffe.TEST)  # Load network
-    print net_full_conv.blobs['data'].data.shape
+    print(net_full_conv.blobs['data'].data.shape)
     net_full_conv.blobs['data'].reshape(1, 3, im.shape[0], im.shape[1])  # Reshape the input layer to image size
-    print net_full_conv.blobs['data'].data.shape
+    print(net_full_conv.blobs['data'].data.shape)
 
     transformer = caffe.io.Transformer({'data': net_full_conv.blobs['data'].data.shape})
     transformer.set_mean('data', np.array([104, 117, 124]))
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     from datetime import datetime
 
     caffe.set_mode_gpu()
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--image", type=str, help="path to image to be classified")
     parser.add_argument("--prototxt", type=str, default="models/deploy-googlenet-conv.prototxt", help="path to prototxt file")
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--plot", action='store_true', help="to plot results")
     args = parser.parse_args()
 
-    image = caffe.io.load_image(args.image)  # must load image using caffe.io.load_image()
+    image = caffe.io.load_image(args.image)  # must load image using caffe.io.load_image(). note this outputs RGB image
     output = classify(image, args.prototxt, args.caffemodel)
 
     if args.plot is True:
