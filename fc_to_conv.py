@@ -13,7 +13,7 @@ params = ['fc8-20']
 fc_params = {pr: (net.params[pr][0].data, net.params[pr][1].data) for pr in params}
 
 for fc in fc_params:
-    print '{} weights are {} dimensional and biases are {} dimensional'.format(fc, fc_params[fc][0].shape, fc_params[fc][1].shape)
+    print('{} weights are {} dimensional and biases are {} dimensional'.format(fc, fc_params[fc][0].shape, fc_params[fc][1].shape))
 
 net_full_conv = caffe.Net('deploy-googlenet-conv.prototxt', 'minc-googlenet.caffemodel', caffe.TEST)
 params_full_conv = ['fc8-conv']
@@ -28,4 +28,4 @@ for pr, pr_conv in zip(params, params_full_conv):
 net_full_conv.save('minc-googlenet-conv.caffemodel')
 
 for param in conv_params:
-    print '{} weights are {} dimensional and biases are {} dimensional'.format(param, conv_params[param][0].shape, conv_params[param][1].shape)
+    print('{} weights are {} dimensional and biases are {} dimensional'.format(param, conv_params[param][0].shape, conv_params[param][1].shape))
