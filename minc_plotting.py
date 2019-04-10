@@ -2,7 +2,6 @@
 Script containing all plotting functions
 """
 
-import caffe
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -42,7 +41,7 @@ def get_class_names(class_numbers):
     for number in class_numbers:
         class_names.append(CLASS_LIST.get(number))
 
-    print class_names
+    print(class_names)
 
     if len(class_names) == 1:  # If only one number is passed to function, we should return a string value
         return class_names[0]
