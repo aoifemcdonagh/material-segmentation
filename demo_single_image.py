@@ -12,7 +12,7 @@ import logging as log
 import numpy as np
 from time import time
 import argparse
-import minc_plotting as minc_plot
+#import minc_plotting as minc_plot
 
 classes_color_map = [
     (150, 150, 150),
@@ -37,28 +37,6 @@ classes_color_map = [
     (178, 101, 130),
     (71, 30, 204)
 ]
-
-
-def plot_class_map(network_output):
-    """
-    Function for plotting the material class map of an image
-    :param network_output:
-    :return:
-    """
-
-
-    class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
-
-    unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
-    class_map = minc_plot.modify_class_map(class_map)  # Modify class_map for plotting
-
-    # Define the step length between ticks for colorbar.
-    step_length = float(len(unique_classes) - 1) / float(len(unique_classes))
-    # Shift each tick location so that the label is in the middle
-    loc = np.arange(step_length / 2, len(unique_classes), step_length) if len(unique_classes) > 1 else [0.0]
-
-    #TODO: Implement plotting in CV2 since it is apparently faster than matplotlib
-
 
 def build_argparser():
     parser = argparse.ArgumentParser()
@@ -88,7 +66,7 @@ if __name__ == "__main__":
     net.batch_size = len(args.image)  # Should be 1
 
     # Read and pre-process input images
-    image = cv2.imread(args.image).astype(np.float32)  # Will have to load in range [0-1] for resizing prob maps?
+    image = cv2.imread(args.image).astype(np.float16)  # Will have to load in range [0-1] for resizing prob maps?
     image = image.transpose((2, 0, 1))  # Change data layout from HWC to CHW
 
     # Reshape input layer for image
@@ -107,7 +85,7 @@ if __name__ == "__main__":
 
     log.info("processing output blob")
 
-    minc_plot.plot_class_map(result)
+    #minc_plot.plot_class_map(result)
 
     log.info("done")
 
