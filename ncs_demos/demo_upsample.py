@@ -8,6 +8,7 @@ import numpy as np
 from time import time
 import argparse
 import minc_plotting as minc_plot
+import ncs_plotting as ncs_plot
 
 CLASS_LIST = {0: "brick",
               1: "carpet",
@@ -35,21 +36,30 @@ CLASS_LIST = {0: "brick",
 
 SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # changed scales
 
+
 def build_argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--model", help="Path to an .xml file with a trained model.", required=True, type=str)
     parser.add_argument("-i", "--image", help="Path to a single image file", required=True,
                         type=str)
+    parser.add_argument("-p", "--padding", help="Number of pixels of padding to add", type=int)
     return parser
 
 
-#def segment(network_outputs):
-
-
-
-def get_average_prob_maps(network_outputs, im, pad=0):
+def segment(network_outputs, im, pad=0):
     """
-    :param im: original image (needed for shape)
+    Function which takes a list of network outputs and returns an upsampled classification map suitable for plotting
+    :param network_outputs: list of network outputs
+    :return: upsampled classification map
+    """
+
+    return get_average_prob_maps(network_outputs, im.shape, pad)
+
+
+
+def get_average_prob_maps(network_outputs, shape, pad=0):
+    """
+    :param shape: shape of original image needed for upsampling
     :param network_outputs: List of outputs from
     :return: Probability maps for each class, averaged from resized images probability maps
     """
@@ -58,7 +68,7 @@ def get_average_prob_maps(network_outputs, im, pad=0):
     prob_maps = [get_probability_maps(out) for out in network_outputs]
 
     # Upsample probability maps to dimensions of original image (plus any padding)
-    upsampled_prob_maps = upsample_prob_maps(prob_maps, output_shape=(im.shape[1] + pad*2, im.shape[2] + pad*2))
+    upsampled_prob_maps = upsample_prob_maps(prob_maps, output_shape=(shape[1] + pad*2, shape[2] + pad*2))
 
     # Probability maps for each class, averaged from resized images probability maps
     averaged_prob_maps = np.average(upsampled_prob_maps, axis=0)
@@ -132,6 +142,20 @@ def get_probability_maps(network_output):
     return [network_output['prob'][0][class_num] for class_num in CLASS_LIST.keys()]
 
 
+def preprocess_image(im, pad=0):
+    """
+    Pre-process input image
+    :param im: loaded image
+    :param pad: number of pixels to pad
+    :return: list of padded/resized/transposed images ready for inference with MINC model
+    """
+    padded_image = add_padding(im, pad=pad)
+    images = resize_image(padded_image)  # perform resizing before transposing
+    images = [image.transpose((2, 0, 1)) for image in images]  # Change data layout from HWC to CHW
+
+    return images
+
+
 if __name__ == "__main__":
     log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.INFO, stream=sys.stdout)  # Configure logging
     args = build_argparser().parse_args()
@@ -152,12 +176,11 @@ if __name__ == "__main__":
     net.batch_size = len(args.image)  # Should be 1
 
     # Read and pre-process input images
-    image = cv2.imread(args.image).astype(np.float16)  # Will have to load in range [0-1] for resizing prob maps?
-    images = resize_image(image)  # perform resizing before transposing
-    images = [image.transpose((2, 0, 1)) for image in images]  # Change data layout from HWC to CHW
+    im = cv2.imread(args.image).astype(np.float16)  # Will have to load in range [0-1] for resizing prob maps?
+    processed_images = preprocess_image(im, pad=args.padding)
     results = []
 
-    for image in images:
+    for image in processed_images:
         # Reshape input layer for image
         net.reshape({input_blob: (1, image.shape[0], image.shape[1], image.shape[2])})
 
@@ -171,13 +194,14 @@ if __name__ == "__main__":
         results.append(exec_net.infer(inputs={input_blob:image}))
         log.info("Average running time of one iteration: {} ms".format((time() - t0) * 1000))
 
-    #class_map = segment(results)  # Produce a final class map from results.
-
-    average_prob_maps = get_average_prob_maps(results, image, pad=100)
-
     log.info("processing output blob")
 
-    minc_plot.plot_class_map(average_prob_maps)
+    segmented_results = segment(results, processed_images[1], pad=args.padding)
+
+    minc_plot.plot_class_map(segmented_results)
+
+    ncs_plot.plot_class_map(segmented_results)
+
 
     log.info("done")
 
