@@ -112,6 +112,7 @@ def plot_confidence_map(network_output, save=False, path=None):
     else:  # Just show the plot
         plt.show()
 
+
 def plot_class_map(network_output, save=False, path=None):
     """
     Function for plotting only the class map from classification output
