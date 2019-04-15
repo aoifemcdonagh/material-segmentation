@@ -1,12 +1,11 @@
 import sys
 import os
 import cv2
-import skimage.transform
 from openvino.inference_engine import IENetwork, IEPlugin
 import logging as log
-import numpy as np
-from time import time
 import argparse
+
+sys.path.insert(0, "../")  # Include above folder in path so segment.py can be found
 from segment import get_average_prob_maps
 
 
