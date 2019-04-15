@@ -4,9 +4,7 @@ import cv2
 from openvino.inference_engine import IENetwork, IEPlugin
 import logging as log
 import argparse
-
-sys.path.insert(0, "../")  # Include above folder in path so segment.py can be found
-from segment import get_average_prob_maps
+from ncs_demos.ncs_utilities import get_average_prob_maps
 
 
 def build_argparser():
