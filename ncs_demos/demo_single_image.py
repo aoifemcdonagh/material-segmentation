@@ -12,7 +12,7 @@ import logging as log
 import numpy as np
 from time import time
 import argparse
-#import minc_plotting as minc_plot
+import minc_plotting as minc_plot
 
 classes_color_map = [
     (150, 150, 150),
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     log.info("processing output blob")
 
-    #minc_plot.plot_class_map(result)
+    minc_plot.plot_class_map(result)
 
     log.info("done")
 

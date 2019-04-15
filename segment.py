@@ -31,15 +31,15 @@ def segment(im, pad=0):
 
     outputs = [minc_utils.classify(image) for image in resized_images]  # Perform classification on images
 
-    average_prob_maps = get_average_prob_maps(outputs, im, pad)
+    average_prob_maps = get_average_prob_maps(outputs, im.shape, pad)
 
     return average_prob_maps
 
 
-def get_average_prob_maps(network_outputs, im, pad=0):
+def get_average_prob_maps(network_outputs, shape, pad=0):
     """
-    :param im: original image (needed for shape)
-    :param network_outputs: List of outputs from
+    :param network_outputs: List of outputs
+    :param shape: shape of original image needed for upsampling
     :return: Probability maps for each class, averaged from resized images probability maps
     """
 
@@ -47,7 +47,7 @@ def get_average_prob_maps(network_outputs, im, pad=0):
     prob_maps = [minc_utils.get_probability_maps(out) for out in network_outputs]
 
     # Upsample probability maps to dimensions of original image (plus any padding)
-    upsampled_prob_maps = upsample(prob_maps, output_shape=(im.shape[0] + pad*2, im.shape[1] + pad*2))
+    upsampled_prob_maps = upsample(prob_maps, output_shape=(shape[0] + pad*2, shape[1] + pad*2))
 
     # Probability maps for each class, averaged from resized images probability maps
     averaged_prob_maps = np.average(upsampled_prob_maps, axis=0)
