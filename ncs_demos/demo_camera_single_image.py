@@ -4,6 +4,7 @@ import cv2
 from openvino.inference_engine import IENetwork, IEPlugin
 import logging as log
 import argparse
+sys.path.insert(0, "../")  # add sys path to find ncs demos
 from ncs_demos.ncs_utilities import get_average_prob_maps
 
 
