@@ -117,12 +117,12 @@ def remove_padding(im, pad=0):
 if __name__ == "__main__":
     import os
     import sys
-    import caffe
     from datetime import datetime
 
-    #caffe.set_mode_gpu()
     image_path = sys.argv[1]  # path to image to be segmented
-    orig_image = caffe.io.load_image(image_path)  # load image
+
+    # Equivalent to caffe.io.load_image(image_path)
+    orig_image = skimage.img_as_float(skimage.io.imread(image_path, as_grey=False)).astype(np.float32)
     padding = 0
     results = segment(orig_image, pad=padding)
 
