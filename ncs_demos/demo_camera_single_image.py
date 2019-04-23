@@ -5,7 +5,7 @@ from openvino.inference_engine import IENetwork, IEPlugin
 import logging as log
 import argparse
 sys.path.insert(0, "../")  # add sys path to find ncs demos
-from ncs_demos.ncs_utilities import get_average_prob_maps
+import ncs_demos.ncs_utilities as utils
 
 
 def build_argparser():
@@ -25,7 +25,7 @@ def generate_class_map(network_outputs, shape, pad=0):
     :return: upsampled classification map
     """
 
-    av_prob_maps = get_average_prob_maps(network_outputs, shape, pad)
+    av_prob_maps = utils.get_average_prob_maps([network_outputs], shape, pad)
     return av_prob_maps.argmax(axis=0)
 
 
@@ -47,8 +47,13 @@ if __name__ == "__main__":
     input_blob = next(iter(net.inputs))
     out_blob = next(iter(net.outputs))
 
-    log.info("resolution = {} {}".format(args.resolution[0], args.resolution[1]))
-    net.reshape({input_blob: (1, 3, args.resolution[0], args.resolution[1])})
+    n = 1
+    c = 3
+    h = args.resolution[0]
+    w = args.resolution[1]
+
+    log.info("resolution = {} {}".format(h, w))
+    net.reshape({input_blob: (n, c, h, w)})
 
     # Loading model to the plugin
     log.info("Loading model to the plugin")
@@ -68,7 +73,7 @@ if __name__ == "__main__":
     log.info("Starting inference in async mode...")
     log.info("To switch between sync and async modes press Tab button")
     log.info("To stop the demo execution press Esc button")
-    is_async_mode = True
+    is_async_mode = False
     render_time = 0
     ret, frame = cap.read()
 
@@ -79,22 +84,43 @@ if __name__ == "__main__":
             ret, frame = cap.read()
         if not ret:
             break
-
+        initial_w = cap.get(3)
+        initial_h = cap.get(4)
+        # Main sync point:
+        # in the truly Async mode we start the NEXT infer request, while waiting for the CURRENT to complete
+        # in the regular mode we start the CURRENT request and immediately wait for it's completion
         if is_async_mode:
-            in_frame = cv2.resize(next_frame, (args.resolution[1], args.resolution[0]))
+            in_frame = cv2.resize(next_frame, (w, h))
             in_frame = in_frame.transpose((2, 0, 1))  # Change data layout from HWC to CHW
-            in_frame = in_frame.reshape((1, 3, args.resolution[0], args.resolution[1]))
+            in_frame = in_frame.reshape((n, c, h, w))
             exec_net.start_async(request_id=next_request_id, inputs={input_blob: in_frame})
         else:
-            in_frame = cv2.resize(frame, (args.resolution[1], args.resolution[0]))
+            in_frame = cv2.resize(frame, (w, h))
             in_frame = in_frame.transpose((2, 0, 1))  # Change data layout from HWC to CHW
-            in_frame = in_frame.reshape((1, 3, args.resolution[0], args.resolution[1]))
+            in_frame = in_frame.reshape((n, c, h, w))
             exec_net.start_async(request_id=cur_request_id, inputs={input_blob: in_frame})
-
         if exec_net.requests[cur_request_id].wait(-1) == 0:
-            results = exec_net.requests[cur_request_id].outputs[out_blob]
-            class_map = generate_class_map(results, [args.resolution[0], args.resolution[1]], pad=args.padding)
+            # Parse detection results of the current request
+            result = exec_net.requests[cur_request_id].outputs
+            av_prob_maps = utils.get_average_prob_maps([result], [h,w])
+            class_map = utils.get_class_map(av_prob_maps)
 
-        cv2.imshow("Segmentation results", class_map)
+            cv2.imshow('class map', class_map)
+
+        if is_async_mode:
+            cur_request_id, next_request_id = next_request_id, cur_request_id
+            frame = next_frame
+
+        key = cv2.waitKey(1)
+        if key == 27:
+            break
+        if (9 == key):
+            is_async_mode = not is_async_mode
+            log.info("Switched to {} mode".format("async" if is_async_mode else "sync"))
+
+
+    del net
+    del exec_net
+    del plugin
 
     log.info("done")
