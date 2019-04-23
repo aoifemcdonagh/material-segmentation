@@ -8,7 +8,7 @@ import numpy as np
 from time import time
 import argparse
 import minc_plotting as minc_plot
-import ncs_plotting as ncs_plot
+import ncs_demos.ncs_plotting as ncs_plot
 
 CLASS_LIST = {0: "brick",
               1: "carpet",

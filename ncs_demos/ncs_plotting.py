@@ -1,7 +1,7 @@
 # Script containing functions for plotting demo results
 
 
-import cv2
+#import cv2
 import numpy as np
 import PyQt5
 
@@ -29,6 +29,33 @@ CLASS_LIST = {0: "brick",
               20: "wallpaper",
               21: "water",
               22: "wood"}
+
+
+#  List of tuples defining colours for each class.
+classes_color_map = [
+    (150, 150, 150),
+    (58, 55, 169),
+    (211, 51, 17),
+    (157, 80, 44),
+    (23, 95, 189),
+    (210, 133, 34),
+    (76, 226, 202),
+    (101, 138, 127),
+    (223, 91, 182),
+    (80, 128, 113),
+    (235, 155, 55),
+    (44, 151, 243),
+    (159, 80, 170),
+    (239, 208, 44),
+    (128, 50, 51),
+    (82, 141, 193),
+    (9, 107, 10),
+    (223, 90, 142),
+    (50, 248, 83),
+    (178, 101, 130),
+    (71, 30, 204),
+    (30, 30, 30)
+]
 
 
 def get_class_names(class_numbers):
@@ -88,6 +115,25 @@ def modify_class_map(class_map):
     return modified_class_map
 
 
+
+def get_class_map(network_output):
+    """
+    Function to generate a class map which can be plotted by OpenCV
+    :param network_output:
+    :return: an array of tuples to be plotted by OpenCV. The tuples define pixel values
+    """
+    if type(network_output) is dict:  # If the input value is an unmodified 'network output' (from a single image)
+        class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+    else:  # if average probability maps are passed in in case of upsampling & averaging
+        class_map = network_output.argmax(axis=0)  # Get highest probability class at each location
+
+
+
+
+# may not need to implement following plotting functions? It might be better to have plotting occur in main script??
+# Or do plotting where GUI is implemented? All that's needed from this script is functions for generating
+# class/probability maps to plot
+
 def plot_class_map(results):
     """
     Plot class map based on results (classification output)
@@ -103,7 +149,6 @@ def plot_class_map(results):
     unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
     class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
-    cv2.imshow('class map', class_map)
 
 
 def plot_confidence_map(results):

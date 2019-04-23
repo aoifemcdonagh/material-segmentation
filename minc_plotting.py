@@ -75,8 +75,8 @@ def modify_class_map(class_map):
     modified_values = range(0, len(unique_values))  # list in range 0 - len(unique_values)
     value_dict = {a: b for (a, b) in zip(unique_values, modified_values)}
 
-    modified_class_map = [[value_dict.get(class_map[i][j]) for j in range(0, class_map.shape[1])] for i in
-                          range(0, class_map.shape[0])]
+    modified_class_map = np.array([[value_dict.get(class_map[i][j]) for j in range(0, class_map.shape[1])] for i in
+                          range(0, class_map.shape[0])])
 
     return modified_class_map
 
