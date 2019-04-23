@@ -2,6 +2,32 @@ import skimage.transform
 import numpy as np
 
 
+#  List of tuples defining colours for each class.
+classes_color_map = [
+    (150, 150, 150),
+    (58, 55, 169),
+    (211, 51, 17),
+    (157, 80, 44),
+    (23, 95, 189),
+    (210, 133, 34),
+    (76, 226, 202),
+    (101, 138, 127),
+    (223, 91, 182),
+    (80, 128, 113),
+    (235, 155, 55),
+    (44, 151, 243),
+    (159, 80, 170),
+    (239, 208, 44),
+    (128, 50, 51),
+    (82, 141, 193),
+    (9, 107, 10),
+    (223, 90, 142),
+    (50, 248, 83),
+    (178, 101, 130),
+    (71, 30, 204),
+    (30, 30, 30)
+]
+
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",
               1: "carpet",
@@ -26,7 +52,34 @@ CLASS_LIST = {0: "brick",
               20: "wallpaper",
               21: "water",
               22: "wood"}
+
 SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
+
+
+def class_to_pixel(c):
+    """
+    Function to convert int values to tuples
+    :param c: 2D array of int values between 0 and 22 (material segmentation output)
+    :return: np array suitable for plotting with cv2. Each class represented by a seperate colour.
+    """
+
+    return np.array([[classes_color_map[class_num] for class_num in row] for row in c], dtype=np.uint8)
+
+
+def get_class_map(network_output):
+    """
+    Function to generate a class map which can be plotted by OpenCV
+    :param network_output:
+    :return: an array of tuples to be plotted by OpenCV. The tuples define pixel values
+    """
+    if type(network_output) is dict:  # If the input value is an unmodified 'network output' (from a single image)
+        class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+    else:  # if average probability maps are passed in in case of upsampling & averaging
+        class_map = network_output.argmax(axis=0)  # Get highest probability class at each location
+
+    pixel_map = class_to_pixel(class_map)  # Convert to format suitable for plotting with OpenCV, i.e. array of pixels
+
+    return pixel_map
 
 
 def get_average_prob_maps(network_outputs, shape, pad=0):
