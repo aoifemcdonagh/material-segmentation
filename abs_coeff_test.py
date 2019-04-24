@@ -60,5 +60,5 @@ if __name__ == "__main__":
 
     output = minc_utils.classify(image_path)
     class_map = minc_utils.get_class_map(output)
-    print class_map
+    print(class_map)
     #get_average_coeff()

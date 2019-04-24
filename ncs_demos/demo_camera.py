@@ -13,7 +13,8 @@ def build_argparser():
     parser.add_argument("-m", "--model", help="Path to an .xml file with a trained model.", required=True, type=str)
     parser.add_argument("-i", "--input", help="Input, 'cam' or path to image", required=True,
                         type=str)
-    parser.add_argument("-p", "--padding", help="Number of pixels of padding to add", type=int)
+    parser.add_argument("-u", "--upsample", help="To upsample output", default=False, action="store_true")
+    parser.add_argument("-p", "--padding", help="Number of pixels of padding to add", type=int, default=0)
     parser.add_argument("-r", "--resolution", help="desired camera resolution, format [h,w]", nargs="+", type=int)
     return parser
 
@@ -57,7 +58,7 @@ if __name__ == "__main__":
 
     # Loading model to the plugin
     log.info("Loading model to the plugin")
-    exec_net = plugin.load(network=net)  # Loading network multiple times takes a long time
+    exec_net = plugin.load(network=net, num_requests=2)
 
     if args.input == 'cam':
         input_stream = 0
@@ -73,12 +74,14 @@ if __name__ == "__main__":
     log.info("Starting inference in async mode...")
     log.info("To switch between sync and async modes press Tab button")
     log.info("To stop the demo execution press Esc button")
-    is_async_mode = False
+    is_async_mode = True
     render_time = 0
     ret, frame = cap.read()
 
-    window = cv2.namedWindow("class map", cv2.WINDOW_NORMAL)
+    window_result = cv2.namedWindow("class map", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("class map", h, w)
+
+    window_frame = cv2.namedWindow("frame", cv2.WINDOW_NORMAL)
     while cap.isOpened():
         if is_async_mode:
             ret, next_frame = cap.read()
@@ -92,11 +95,13 @@ if __name__ == "__main__":
         # in the truly Async mode we start the NEXT infer request, while waiting for the CURRENT to complete
         # in the regular mode we start the CURRENT request and immediately wait for it's completion
         if is_async_mode:
+            cv2.imshow("frame", next_frame)
             in_frame = cv2.resize(next_frame, (w, h))
             in_frame = in_frame.transpose((2, 0, 1))  # Change data layout from HWC to CHW
             in_frame = in_frame.reshape((n, c, h, w))
             exec_net.start_async(request_id=next_request_id, inputs={input_blob: in_frame})
         else:
+            cv2.imshow("frame", frame)
             in_frame = cv2.resize(frame, (w, h))
             in_frame = in_frame.transpose((2, 0, 1))  # Change data layout from HWC to CHW
             in_frame = in_frame.reshape((n, c, h, w))
@@ -104,8 +109,11 @@ if __name__ == "__main__":
         if exec_net.requests[cur_request_id].wait(-1) == 0:
             # Parse detection results of the current request
             result = exec_net.requests[cur_request_id].outputs
-            #av_prob_maps = utils.get_average_prob_maps([result], [h,w])
-            class_map = utils.get_class_map(result)
+            if args.upsample:
+                av_prob_maps = utils.get_average_prob_maps([result], [h,w], pad=args.padding)
+                class_map = utils.get_class_map(av_prob_maps)
+            else:
+                class_map = utils.get_class_map(result)
 
             cv2.imshow('class map', class_map)
 
