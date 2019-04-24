@@ -77,6 +77,8 @@ if __name__ == "__main__":
     render_time = 0
     ret, frame = cap.read()
 
+    window = cv2.namedWindow("class map", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("class map", h, w)
     while cap.isOpened():
         if is_async_mode:
             ret, next_frame = cap.read()
@@ -102,8 +104,8 @@ if __name__ == "__main__":
         if exec_net.requests[cur_request_id].wait(-1) == 0:
             # Parse detection results of the current request
             result = exec_net.requests[cur_request_id].outputs
-            av_prob_maps = utils.get_average_prob_maps([result], [h,w])
-            class_map = utils.get_class_map(av_prob_maps)
+            #av_prob_maps = utils.get_average_prob_maps([result], [h,w])
+            class_map = utils.get_class_map(result)
 
             cv2.imshow('class map', class_map)
 
@@ -111,7 +113,7 @@ if __name__ == "__main__":
             cur_request_id, next_request_id = next_request_id, cur_request_id
             frame = next_frame
 
-        key = cv2.waitKey(1000)
+        key = cv2.waitKey(10)
         if key == 27:
             break
         if (9 == key):

@@ -25,7 +25,8 @@ classes_color_map = [
     (50, 248, 83),
     (178, 101, 130),
     (71, 30, 204),
-    (30, 30, 30)
+    (30, 30, 30),
+    (90, 90, 90)
 ]
 
 #  Global dictionary containing class number : name pairs
