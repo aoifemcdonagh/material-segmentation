@@ -1,5 +1,8 @@
 import skimage.transform
 import numpy as np
+import logging as log
+import time
+import sys
 
 
 #  List of tuples defining colours for each class.
@@ -29,6 +32,63 @@ classes_color_map = [
     (90, 90, 90)
 ]
 
+# List of HSV color pixel values for each class
+hsv_color_map = [(0, 255, 255),
+ (8, 255, 255),
+ (16, 255, 255),
+ (24, 255, 255),
+ (32, 255, 255),
+ (40, 255, 255),
+ (48, 255, 255),
+ (56, 255, 255),
+ (65, 255, 255),
+ (73, 255, 255),
+ (81, 255, 255),
+ (89, 255, 255),
+ (97, 255, 255),
+ (105, 255, 255),
+ (113, 255, 255),
+ (122, 255, 255),
+ (130, 255, 255),
+ (138, 255, 255),
+ (146, 255, 255),
+ (154, 255, 255),
+ (162, 255, 255),
+ (170, 255, 255),
+ (179, 255, 255)]
+
+# RGB color map with 23 evenly spaced colors (Evenly spaced in HSV spectrum and converted)
+even_color_map = [
+    (255, 0, 0),
+    (255, 68, 0),
+    (255, 136, 0),
+    (255, 204, 0),
+    (238, 255, 0),
+    (170, 255, 0),
+    (102, 255, 0),
+    (34, 255, 0),
+    (0, 255,  43),
+    (0, 255, 111),
+    (0, 255, 179),
+    (0, 255, 247),
+    (0, 195, 255),
+    (0, 127, 255),
+    (0, 59, 255),
+    (17, 0, 255),
+    (85, 0, 255),
+    (153, 0, 255),
+    (221, 0, 255),
+    (255, 0, 221),
+    (255, 0, 153),
+    (255, 0, 85),
+    (255, 0, 8),
+
+]
+
+# TODO: implement color map based on material absorption coeff values
+
+abs_color_map = []
+
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",
               1: "carpet",
@@ -57,20 +117,25 @@ CLASS_LIST = {0: "brick",
 SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
 
 
-def class_to_pixel(c):
+def class_to_pixel(c, t='even'):
     """
     Function to convert int values to tuples
     :param c: 2D array of int values between 0 and 22 (material segmentation output)
+    :param t: type of color map to use
+        even: evenly spaced RGB colors (evenly spaced hue values in HSV space and converted)
+        abs: color map based on absorption coeffs for each material
     :return: np array suitable for plotting with cv2. Each class represented by a seperate colour.
     """
 
-    return np.array([[classes_color_map[class_num] for class_num in row] for row in c], dtype=np.uint8)
+    color_map = even_color_map if t == 'even' else abs_color_map  # Use specified color map
+    return np.array([[color_map[class_num] for class_num in row] for row in c], dtype=np.uint8)
 
 
-def get_class_map(network_output):
+def get_class_map(network_output, map_type='even'):
     """
     Function to generate a class map which can be plotted by OpenCV
     :param network_output:
+    :param map_type: type of color map to use ('even' or 'abs')
     :return: an array of tuples to be plotted by OpenCV. The tuples define pixel values
     """
     if type(network_output) is dict:  # If the input value is an unmodified 'network output' (from a single image)
@@ -78,7 +143,7 @@ def get_class_map(network_output):
     else:  # if average probability maps are passed in in case of upsampling & averaging
         class_map = network_output.argmax(axis=0)  # Get highest probability class at each location
 
-    pixel_map = class_to_pixel(class_map)  # Convert to format suitable for plotting with OpenCV, i.e. array of pixels
+    pixel_map = class_to_pixel(class_map, map_type)  # Convert to format suitable for plotting with OpenCV, i.e. array of pixels
 
     return pixel_map
 
@@ -89,20 +154,23 @@ def get_average_prob_maps(network_outputs, shape, pad=0):
     :param shape: shape of original image needed for upsampling
     :return: Probability maps for each class, averaged from resized images probability maps
     """
-
+    log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.INFO, stream=sys.stdout)  # Configure logging
     # Get probability maps for each class for each image
     prob_maps = [get_probability_maps(out) for out in network_outputs]
 
+    upsample_start = time.time()
     # Upsample probability maps to dimensions of original image (plus any padding)
     upsampled_prob_maps = upsample(prob_maps, output_shape=(shape[0] + pad*2, shape[1] + pad*2))
+    log.info("Upsampling operation time: {:.3f} ms".format((time.time() - upsample_start) * 1000))
 
     # Probability maps for each class, averaged from resized images probability maps
+    # Averaging over axis 0 removes the 'n' dimension so that the output is 23*H*W
     averaged_prob_maps = np.average(upsampled_prob_maps, axis=0)
 
     # Remove the padded sections from the averaged prob maps
-    averaged_prob_maps = [remove_padding(prob_map, pad) for prob_map in averaged_prob_maps]
+    averaged_prob_maps = np.array([remove_padding(prob_map, pad) for prob_map in averaged_prob_maps])
 
-    return np.array(averaged_prob_maps)
+    return averaged_prob_maps
 
 
 def upsample(prob_maps_multiple_images, output_shape):
