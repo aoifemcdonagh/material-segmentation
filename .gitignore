@@ -5,6 +5,7 @@ plots/
 *.prototxt
 *.jpg
 *.jpeg
+*.mp4
 images/
 .idea/
 models/

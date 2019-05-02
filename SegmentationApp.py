@@ -4,87 +4,78 @@ from PIL import Image
 from PIL import ImageTk
 import tkinter as tk
 import threading
-import argparse
-import logging as log
-import caffe
-import sys
-import datetime
-import imutils
 import cv2
-import os
-import time
-
-
-def build_argparser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--model", help="Path to an .xml file with a trained model.", type=str)
-    parser.add_argument("-i", "--input", help="Input, 'cam' or path to image", required=True,
-                        type=str)
-    parser.add_argument("-u", "--upsample", help="To upsample output", default=False, action="store_true")
-    parser.add_argument("-p", "--padding", help="Number of pixels of padding to add", type=int, default=0)
-    parser.add_argument("-r", "--resolution", help="desired camera resolution, format [h,w]", nargs="+", type=int)
-    return parser
+import segment as s
+import ncs_demos.ncs_utilities as utils
+import caffe
 
 
 class SegmentationApp:
-    def __init__(self, vs):
-        self.vs = vs  # video stream
+    def __init__(self, vc, pad):
+        self.vc = vc  # video capture
+        self.padding = pad
         self.frame = None
-        self.thread = None
-        self.stopEvent = None
+        self.video_thread = None
+        self.segment_thread = None
+        self.stopVideo = None
+        self.stopSegmenting = None
 
         self.root = tk.Tk()
         self.panel = None
 
         # create a button, that when pressed, will start segmentation on video stream
-        btn = tk.Button(self.root, text="Snapshot!", command=self.start_segmentation)
+        btn = tk.Button(self.root, text="segment!", command=self.segment)
         btn.pack(side="bottom", fill="both", expand="yes", padx=10, pady=10)
 
         # Start a thread which reads from camera/video file
-        self.stopEvent = threading.Event()
-        self.thread = threading.Thread(target=self.videoLoop, args=())
-        self.thread.start()
+        self.stopVideo = threading.Event()
+        self.video_thread = threading.Thread(target=self.video_loop, args=())
+        self.video_thread.start()
+
+        # Start thread which performs segmentation
+        #self.stopSegmenting = threading.Event()
+        #self.segment_thread = threading.Thread(target=self.segment, args=())
+        #self.segment_thread.start()
 
         # set a callback to handle when the window is closed
         self.root.wm_title("PyImageSearch PhotoBooth")
-        self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
+        self.root.wm_protocol("WM_DELETE_WINDOW", self.on_close)
 
     def video_loop(self):
+        caffe.set_mode_gpu()
         try:
             # keep looping over frames until we are instructed to stop
-            while not self.stopEvent.is_set():
+            while not self.stopVideo.is_set():
                 # grab the frame from the video stream
-                self.frame = self.vs.read()
-                #self.frame = imutils.resize(self.frame, width=300)  # May need to resize??
-
-                # OpenCV represents images in BGR order; however PIL
-                # represents images in RGB order, so we need to swap
-                # the channels, then convert to PIL and ImageTk format
-                image = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
-                image = Image.fromarray(image)
-                image = ImageTk.PhotoImage(image)
+                _, self.frame = self.vc.read()
 
                 # image processing is done by caffe before feeding to CNN
+                results = s.segment(self.frame, pad=self.padding)
+                class_map = utils.get_class_map(results)
+                class_map = Image.fromarray(class_map)
+                class_map = ImageTk.PhotoImage(class_map)
 
                 # if the panel is not None, we need to initialize it
                 if self.panel is None:
-                    self.panel = tk.Label(image=image)
-                    self.panel.image = image
+                    self.panel = tk.Label(image=class_map)
+                    self.panel.image = class_map
                     self.panel.pack(side="left", padx=10, pady=10)
 
                 # otherwise, simply update the panel
                 else:
-                    self.panel.configure(image=image)
-                    self.panel.image = image
+                    self.panel.configure(image=class_map)
+                    self.panel.image = class_map
 
         except RuntimeError:
                 print("[INFO] caught a RuntimeError")
 
-    def start_segmentation(self):
+    def segment(self):
         """
         Function for
         :return:
         """
+        print("Segmenting")
+
 
     def on_close(self):
         # set the stop event, cleanup the camera, and allow the rest of
@@ -93,24 +84,3 @@ class SegmentationApp:
         self.stopEvent.set()
         self.vs.stop()
         self.root.quit()
-
-
-if __name__ == '__main__':
-    caffe.set_mode_gpu()
-    log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.INFO, stream=sys.stdout)  # Configure logging
-    args = build_argparser().parse_args()
-
-    if args.input == 'cam':
-        input_stream = 0
-    else:
-        input_stream = args.input
-        assert os.path.isfile(args.input), "Specified input file doesn't exist"
-
-    log.info("Setting up camera")
-
-    vs = cv2.VideoStream(input_stream).start()
-    time.sleep(2.0)
-
-    # start the app
-    sa = SegmentationApp(vs)
-    sa.root.mainloop()
