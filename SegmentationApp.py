@@ -5,7 +5,7 @@ from PIL import ImageTk
 import tkinter as tk
 import threading
 import cv2
-import segment as s
+from gpu_segment import segment
 import ncs_demos.ncs_utilities as utils
 import caffe
 
@@ -50,7 +50,7 @@ class SegmentationApp:
                 _, self.frame = self.vc.read()
 
                 # image processing is done by caffe before feeding to CNN
-                results = s.segment(self.frame, pad=self.padding)
+                results = segment(self.frame, pad=self.padding)
                 class_map = utils.get_class_map(results)
                 class_map = Image.fromarray(class_map)
                 class_map = ImageTk.PhotoImage(class_map)

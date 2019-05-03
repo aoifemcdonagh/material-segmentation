@@ -1,3 +1,7 @@
+# Script for performing pyramidal upsampling and segmentation on NCS
+# Segments a single image
+# Very slow since network has to be loaded every time it's reshaped, i.e. 3 times per segmented image.
+# This script implements own segment function customised for NCS
 import sys
 import os
 import cv2
@@ -42,7 +46,7 @@ def build_argparser():
     parser.add_argument("-m", "--model", help="Path to an .xml file with a trained model.", required=True, type=str)
     parser.add_argument("-i", "--image", help="Path to a single image file", required=True,
                         type=str)
-    parser.add_argument("-p", "--padding", help="Number of pixels of padding to add", type=int)
+    parser.add_argument("-p", "--padding", help="Number of pixels of padding to add", type=int, default=0)
     return parser
 
 
@@ -176,7 +180,9 @@ if __name__ == "__main__":
     net.batch_size = len(args.image)  # Should be 1
 
     # Read and pre-process input images
-    im = cv2.imread(args.image).astype(np.float16)  # Will have to load in range [0-1] for resizing prob maps?
+    # Image loaded as type float32. Works as expected with NCS
+    # float16 was thought to be required by NCS but skimage.transform.rescale throws error for this type.
+    im = cv2.imread(args.image).astype(np.float32)
     processed_images = preprocess_image(im, pad=args.padding)
     results = []
 
@@ -185,6 +191,7 @@ if __name__ == "__main__":
         net.reshape({input_blob: (1, image.shape[0], image.shape[1], image.shape[2])})
 
         # Loading model to the plugin
+        # Model needs to be loaded every time network input is resized.
         log.info("Loading model to the plugin")
         exec_net = plugin.load(network=net)  # Loading network multiple times takes a long time
 
@@ -201,7 +208,6 @@ if __name__ == "__main__":
     minc_plot.plot_class_map(segmented_results)
 
     ncs_plot.plot_class_map(segmented_results)
-
 
     log.info("done")
 
