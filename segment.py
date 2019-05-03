@@ -4,7 +4,6 @@
 
 import skimage
 import minc_classify as minc_utils
-import minc_plotting as minc_plot
 import numpy as np
 
 SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
@@ -118,6 +117,7 @@ if __name__ == "__main__":
     import os
     import sys
     from datetime import datetime
+    import minc_plotting as minc_plot
 
     image_path = sys.argv[1]  # path to image to be segmented
 
