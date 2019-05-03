@@ -1,10 +1,16 @@
-import os
-os.environ['GLOG_minloglevel'] = '2'  # Supressing caffe printouts of network initialisation
-import caffe
-import numpy as np
-import skimage
+# Script containing functions for performing image segmentation on desktop environment with GPU
 
-top_dir = os.path.dirname(os.path.realpath(__file__))
+import numpy as np
+from PIL import Image
+import skimage
+import time
+import os
+os.environ['GLOG_minloglevel'] = '2'  # Suppressing caffe printouts of network initialisation
+import caffe
+caffe.set_mode_gpu()
+
+top_dir = os.path.dirname(os.path.realpath(__file__))  # Find path to directory containing this script
+default_caffemodel = top_dir+"/models/minc-googlenet-conv.caffemodel" # default caffemodel file
 
 SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
 
@@ -34,28 +40,24 @@ CLASS_LIST = {0: "brick",
               22: "wood"}
 
 
-def segment(im, pad=0):
+def segment(im, pad=0, caffemodel=None):
     """
-    TODO: Function needs to be implemented which performs material classification on an image at three different
-    scales. What should be the output based on next stage of processing? Probability maps for a whole image? Separate
-    probability maps for each class for each image?
-    possibly give method another name which better reflects its function
-
-    This function currently does too much??
-
-    This method should call 'classify()' function from full_image_classify
-
+    Function which segments an input image. uses pyramidal method of scaling, performing
+    inference, upsampling results, and averaging results.
     :param im: image to segment
     :param pad: number of pixels of padding to add
-    :return:
+    :param caffemodel: path to caffemodel file
+    :return: The upsampled and averaged results of inference on input image at 3 scales.
     """
 
     padded_image = add_padding(im, pad)  # Add padding to original image
     resized_images = resize_images(padded_image)  # Resize original images
 
-    outputs = [classify(image) for image in resized_images]  # Perform classification on images
+    outputs = [classify(image, caffemodel=caffemodel) for image in resized_images]  # Perform classification on images
 
+    upsample_start = time.time()
     average_prob_maps = get_average_prob_maps(outputs, im.shape, pad)
+    print("Total segmenting time: {:.3f} ms".format((time.time() - upsample_start) * 1000))
 
     return average_prob_maps
 
@@ -71,9 +73,12 @@ def get_average_prob_maps(network_outputs, shape, pad=0):
     prob_maps = [get_probability_maps(out) for out in network_outputs]
 
     # Upsample probability maps to dimensions of original image (plus any padding)
-    upsampled_prob_maps = upsample(prob_maps, output_shape=(shape[0] + pad*2, shape[1] + pad*2))
+    # Output shape in (width, height) format for PIL.Image resizing.
+    # Swap shape[1] and shape[0] if using skimage resizing
+    upsampled_prob_maps = upsample_PIL(prob_maps, output_shape=(shape[1] + pad*2, shape[0] + pad*2))
 
-    # Probability maps for each class, averaged from resized images probability maps
+    # Average probability maps for each class.
+    # Average across upsampled inference results of all resized images
     averaged_prob_maps = np.average(upsampled_prob_maps, axis=0)
 
     # Remove the padded sections from the averaged prob maps
@@ -89,22 +94,43 @@ def upsample(prob_maps_multiple_images, output_shape):
     :param output_shape: Desired shape to upsample to (should be dimensions of original image)
     :return:
     """
-
+    upsample_start = time.time()
     # Upsampling probability maps to be same dimensions as original image
     # np.array so that they can be averaged later
-    return np.array([[skimage.transform.resize(prob_map,
+    upsampled = np.array([[skimage.transform.resize(prob_map,
                                                output_shape=output_shape,
                                                mode='constant',
                                                cval=0,
                                                preserve_range=True)
                       for prob_map in prob_maps_single_image]
                     for prob_maps_single_image in prob_maps_multiple_images])
+    print("upsample time: {:.3f} ms".format((time.time() - upsample_start) * 1000))
+    return upsampled
+
+
+def upsample_PIL(prob_maps_multiple_images, output_shape):
+    """
+    Function for performing upsamping of probability maps
+    USES PIL RESIZE FUNCTION INSTEAD OF SKIMAGE
+    :param prob_maps: Probability maps for each class for each resized image
+    :param output_shape: Desired shape to upsample to (should be dimensions of original image)
+    :return:
+    """
+    upsample_start = time.time()
+    # Upsampling probability maps to be same dimensions as original image
+    # np.array so that they can be averaged later
+    upsampled = np.array([[np.array(Image.fromarray(prob_map).resize(size=output_shape, resample=Image.BILINEAR))
+                      for prob_map in prob_maps_single_image]
+                    for prob_maps_single_image in prob_maps_multiple_images])
+
+    print("upsample time PIL: {:.3f} ms".format((time.time() - upsample_start) * 1000))
+    return upsampled
 
 
 def resize_images(im):
     """
     Function for resizing an image to scales as defined in MINC paper
-    Not saving images anymore, just returning them for processing
+    images are not saved, instead returned for processing
 
     :param im: pre-loaded image
     :return: list of resized images
@@ -138,20 +164,23 @@ def remove_padding(im, pad=0):
         return im[pad:-pad, pad:-pad]
 
 
-def classify(im, prototxt=top_dir+"/models/deploy-googlenet-conv.prototxt", caffemodel=top_dir+"/models/minc-googlenet-conv.caffemodel"):
+def classify(im, caffemodel=None):
     """
     Function performing material classification across a whole image of arbitrary size.
 
     :param im: image preloaded using caffe.io.load_image()
-    :param prototxt: name of .prototxt file
     :param caffemodel: name of .caffemodel file
     :return: network output
     """
 
+    if caffemodel is None:  # If no caffemodel file specified use default
+        caffemodel = default_caffemodel
+
+    # Prototxt file is assumed to have the same name as caffemodel file
+    prototxt = os.path.splitext(caffemodel)[0] + ".prototxt"
+
     net_full_conv = caffe.Net(prototxt, caffemodel, caffe.TEST)  # Load network
-    print(net_full_conv.blobs['data'].data.shape)
     net_full_conv.blobs['data'].reshape(1, 3, im.shape[0], im.shape[1])  # Reshape the input layer to image size
-    print(net_full_conv.blobs['data'].data.shape)
 
     transformer = caffe.io.Transformer({'data': net_full_conv.blobs['data'].data.shape})
     transformer.set_mean('data', np.array([104, 117, 124]))
@@ -159,8 +188,10 @@ def classify(im, prototxt=top_dir+"/models/deploy-googlenet-conv.prototxt", caff
     transformer.set_channel_swap('data', (2, 1, 0))
     transformer.set_raw_scale('data', 255.0)
 
+    inf_start = time.time()
     # make classification map by forward and print prediction indices at each location
     out = net_full_conv.forward_all(data=np.asarray([transformer.preprocess('data', im)]))
+    print("Inference time: {:.3f} ms".format((time.time() - inf_start)*1000))
 
     return out
 
