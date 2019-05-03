@@ -262,3 +262,34 @@ def plot_output(network_output, image=None, path=None):
 
         plt.savefig(path + "/" + str(class_num) + ".jpg")
         plt.close()
+
+
+def get_class_plot(network_output):
+    """
+    Function for plotting only the class map from classification output
+    :param network_output:
+    """
+
+    if type(network_output) is dict:  # If the input value is an unmodified 'network output'
+        class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+    else:  # if average probability maps are passed in in case of upsampling & averaging
+        class_map = network_output.argmax(axis=0)
+
+    unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
+    class_map = modify_class_map(class_map)  # Modify class_map for plotting
+
+
+    fig, ax = plt.subplots(figsize=(15,8))
+
+    ax.set_title("Class at each location")
+    hb = ax.imshow(class_map, cmap=plt.get_cmap("gist_rainbow", len(unique_classes)))
+
+    step_length = float(len(unique_classes) - 1) / float(
+        len(unique_classes))  # Define the step length between ticks for colorbar.
+    loc = np.arange(step_length / 2, len(unique_classes), step_length) if len(unique_classes) > 1 else [
+        0.0]  # Shift each tick location so that the label is in the middle
+    cb = fig.colorbar(hb, ticks=loc)
+    cb.set_ticklabels(get_tick_labels(unique_classes))
+    cb.set_label('Class Numbers')
+
+    return plt

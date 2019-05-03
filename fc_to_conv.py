@@ -6,7 +6,7 @@
 import caffe
 caffe.set_mode_gpu()
 
-net = caffe.Net('deploy-googlenet.prototxt', 'minc-googlenet.caffemodel', caffe.TEST)
+net = caffe.Net('minc-googlenet.prototxt', 'minc-googlenet.caffemodel', caffe.TEST)
 params = ['fc8-20']
 
 # fc_params = {name: (weights, biases)}
@@ -15,7 +15,7 @@ fc_params = {pr: (net.params[pr][0].data, net.params[pr][1].data) for pr in para
 for fc in fc_params:
     print('{} weights are {} dimensional and biases are {} dimensional'.format(fc, fc_params[fc][0].shape, fc_params[fc][1].shape))
 
-net_full_conv = caffe.Net('deploy-googlenet-conv.prototxt', 'minc-googlenet.caffemodel', caffe.TEST)
+net_full_conv = caffe.Net('minc-googlenet-conv.prototxt', 'minc-googlenet.caffemodel', caffe.TEST)
 params_full_conv = ['fc8-conv']
 
 conv_params = {pr: (net_full_conv.params[pr][0].data, net_full_conv.params[pr][1].data) for pr in params_full_conv}

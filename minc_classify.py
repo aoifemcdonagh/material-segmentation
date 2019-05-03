@@ -1,5 +1,9 @@
+import os
+os.environ['GLOG_minloglevel'] = '2'  # Supressing caffe printouts of network initialisation
 import caffe
 import numpy as np
+
+top_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 #  Global dictionary containing class number : name pairs
@@ -28,7 +32,7 @@ CLASS_LIST = {0: "brick",
               22: "wood"}
 
 
-def classify(im, prototxt="models/deploy-googlenet-conv.prototxt", caffemodel="models/minc-googlenet-conv.caffemodel"):
+def classify(im, prototxt=top_dir+"/models/minc-googlenet-conv.prototxt", caffemodel=top_dir+"/models/minc-googlenet-conv.caffemodel"):
     """
     Function performing material classification across a whole image of arbitrary size.
 
@@ -75,38 +79,4 @@ def get_class_map(network_output):
     return network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
 
 
-if __name__ == "__main__":
-    """
-    Script to classify material in a full image.
-    Uses MINC GoogLeNet model modified to be fully convolutional
-    Inputs:
-         - path to image to classify
-    Optional inputs:
-         - path to .prototxt file
-         - path to .caffemodel file
-         - option to plot results or not
-    """
-    import argparse
-    import minc_plotting as minc_plot
-    import os
-    from datetime import datetime
 
-    caffe.set_mode_gpu()
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--image", type=str, help="path to image to be classified")
-    parser.add_argument("--prototxt", type=str, default="models/deploy-googlenet-conv.prototxt", help="path to prototxt file")
-    parser.add_argument("--caffemodel", type=str, default="models/minc-googlenet-conv.caffemodel", help="path to caffemodel file")
-    parser.add_argument("-p", "--plot", action='store_true', help="to plot results")
-    args = parser.parse_args()
-
-    image = caffe.io.load_image(args.image)  # must load image using caffe.io.load_image(). note this outputs RGB image
-    output = classify(image, args.prototxt, args.caffemodel)
-
-    if args.plot is True:
-        results_dir = os.path.join(os.getcwd(), "plots", ("no_upsampling_" + datetime.now().strftime('%Y-%m-%d_%H-%M-%S')))
-        os.mkdir(results_dir)
-        minc_plot.plot_class_map(output, save=True, path=results_dir)
-        minc_plot.plot_confidence_map(output, save=True, path=results_dir)
-
-    #plot_probability_maps(output)

@@ -8,7 +8,7 @@ import sys
 caffe.set_mode_gpu()
 
 # Load the fully convolutional network
-net=caffe.Net('deploy-googlenet-conv.prototxt','minc-googlenet-conv.caffemodel', caffe.TEST)
+net=caffe.Net('minc-googlenet-conv.prototxt','minc-googlenet-conv.caffemodel', caffe.TEST)
 
 print(net.inputs)
 print(net.blobs['data'].data.shape)
