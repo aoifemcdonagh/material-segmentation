@@ -10,7 +10,7 @@ import caffe
 caffe.set_mode_gpu()
 
 top_dir = os.path.dirname(os.path.realpath(__file__))  # Find path to directory containing this script
-default_caffemodel = top_dir+"/models/minc-googlenet-conv.caffemodel" # default caffemodel file
+default_caffemodel = top_dir+"/../models/minc-googlenet-conv.caffemodel" # default caffemodel file
 
 SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
 
@@ -49,6 +49,7 @@ def segment(im, pad=0, caffemodel=None):
     :param caffemodel: path to caffemodel file
     :return: The upsampled and averaged results of inference on input image at 3 scales.
     """
+    caffe.set_mode_gpu()
 
     padded_image = add_padding(im, pad)  # Add padding to original image
     resized_images = resize_images(padded_image)  # Resize original images

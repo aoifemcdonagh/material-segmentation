@@ -4,9 +4,9 @@ from PIL import Image
 from PIL import ImageTk
 import tkinter as tk
 import threading
-import cv2
-from gpu_segment import segment
+from bonaire.gpu_segment import segment
 import ncs_demos.ncs_utilities as utils
+from bonaire.minc_plotting import get_class_plot
 import caffe
 
 
@@ -40,6 +40,7 @@ class SegmentationApp:
         # set a callback to handle when the window is closed
         self.root.wm_title("PyImageSearch PhotoBooth")
         self.root.wm_protocol("WM_DELETE_WINDOW", self.on_close)
+
 
     def video_loop(self):
         caffe.set_mode_gpu()
@@ -82,5 +83,5 @@ class SegmentationApp:
         # the quit process to continue
         print("[INFO] closing...")
         self.stopEvent.set()
-        self.vs.stop()
+        self.vc.stop()
         self.root.quit()
