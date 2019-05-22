@@ -5,7 +5,7 @@ import time
 from openvino.inference_engine import IENetwork, IEPlugin
 import logging as log
 import argparse
-#sys.path.insert(0, "../")  # add sys path to find ncs demos
+sys.path.insert(0, "../")  # add sys path to find ncs demos
 import ncs_demos.ncs_utilities as utils
 
 

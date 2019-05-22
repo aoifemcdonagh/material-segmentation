@@ -3,7 +3,6 @@
 
 #import cv2
 import numpy as np
-import PyQt5
 
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",

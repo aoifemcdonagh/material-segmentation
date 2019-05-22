@@ -11,8 +11,7 @@ import logging as log
 import numpy as np
 from time import time
 import argparse
-import minc_plotting as minc_plot
-import ncs_demos.ncs_plotting as ncs_plot
+from bonaire import minc_plotting as minc_plot
 
 CLASS_LIST = {0: "brick",
               1: "carpet",
@@ -205,9 +204,10 @@ if __name__ == "__main__":
 
     segmented_results = segment(results, processed_images[1], pad=args.padding)
 
+    # Using matplitlib plotting for colorbar
     minc_plot.plot_class_map(segmented_results)
 
-    ncs_plot.plot_class_map(segmented_results)
+    #ncs_plot.plot_class_map(segmented_results)
 
     log.info("done")
 
