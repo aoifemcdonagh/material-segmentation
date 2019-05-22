@@ -5,10 +5,7 @@ Script for approximating an average absorption coefficient
 import caffe
 import sys
 
-import minc_classify as minc_utils
-import segment as resize
-import numpy as np
-
+from bonaire import minc_classify as minc_utils
 
 # Define absorption coefficients for each material
 
@@ -52,6 +49,10 @@ def get_average_coeff():
     Function for generating an average absorption coeff based on material classification probabilities
     :return:
     """
+
+
+def get_color_map():
+
 
 
 if __name__ == "__main__":

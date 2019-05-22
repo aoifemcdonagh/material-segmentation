@@ -4,15 +4,13 @@ Uses MINC GoogLeNet model modified to be fully convolutional
 Inputs:
      - path to image to classify
 Optional inputs:
-     - path to .prototxt file
      - path to .caffemodel file
-     - option to plot results or not
 """
 
 import argparse
-import minc_plotting as minc_plot
+from bonaire import minc_plotting as minc_plot
 import caffe
-from gpu_segment import classify
+from bonaire.gpu_segment import classify
 
 caffe.set_mode_gpu()
 
