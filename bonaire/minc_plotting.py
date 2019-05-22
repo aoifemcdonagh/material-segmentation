@@ -4,6 +4,7 @@ Script containing all plotting functions
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import os
 from datetime import datetime
 
@@ -278,11 +279,11 @@ def get_class_plot(network_output):
     unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
     class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
+    fig = Figure(figsize=(15, 8))
+    a = fig.add_subplot(111)
 
-    fig, ax = plt.subplots(figsize=(15,8))
-
-    ax.set_title("Class at each location")
-    hb = ax.imshow(class_map, cmap=plt.get_cmap("gist_rainbow", len(unique_classes)))
+    a.set_title("Class at each location")
+    hb = a.imshow(class_map, cmap=plt.get_cmap("gist_rainbow", len(unique_classes)))
 
     step_length = float(len(unique_classes) - 1) / float(
         len(unique_classes))  # Define the step length between ticks for colorbar.
@@ -292,4 +293,5 @@ def get_class_plot(network_output):
     cb.set_ticklabels(get_tick_labels(unique_classes))
     cb.set_label('Class Numbers')
 
-    return plt
+    return fig
+
