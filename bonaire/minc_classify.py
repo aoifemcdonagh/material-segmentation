@@ -1,3 +1,8 @@
+####### REDUNDANT #######
+# This script is only used by test_upsampling.py for classify() function.
+# Keeping for reference at this point.
+
+
 import os
 os.environ['GLOG_minloglevel'] = '2'  # Supressing caffe printouts of network initialisation
 import caffe

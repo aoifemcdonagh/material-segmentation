@@ -1,9 +1,16 @@
+# Contains functions for modifying classification results to be plotted
+
 import skimage.transform
 import numpy as np
 import logging as log
 import time
 import sys
+import csv
+from PIL import Image
+from PIL import ImageTk
+import cv2
 
+abs_coeff_file = "../abs_coefficients.csv"
 
 #  List of tuples defining colours for each class.
 classes_color_map = [
@@ -85,9 +92,8 @@ even_color_map = [
 
 ]
 
-# TODO: implement color map based on material absorption coeff values
-
-abs_color_map = []
+grayscale = [  7,  28,   0,  15,   5,  72,   0,  15,   5,  20,   5,   5,   5,
+        92, 190, 255,   1,  15,  15, 115, 115, 115]
 
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",
@@ -117,9 +123,99 @@ CLASS_LIST = {0: "brick",
 SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
 
 
+class PlottingEngine:
+    def __init__(self):
+        self.colormap = None
+
+
+    def process(self, results, color_map):
+        """
+        Function which returns an image ready to be shown in Tkinter GUI
+        :param results: Network output
+        :param color_map: colormap
+        :return:
+        """
+
+        if color_map is not None:
+            self.set_colormap(color_map)
+
+        pixel_map = get_pixel_map(results, self.colormap)
+
+        image = Image.fromarray(pixel_map)
+        image = ImageTk.PhotoImage(image)
+
+        return image
+
+    def set_colormap(self, map_type, freq_band=None):
+        """
+        Set desired colormap for plotting
+        :param map_type: string specifying what type of colormap to use
+        :param freq_band: int denoting frequency band for which to create color map based on material absorption coeffs
+        :return:
+        """
+
+        if map_type == "absorption":
+            cmap = self.generate_grayscale_map(freq_band)
+
+        elif map_type == "classes":
+            cmap = self.generate_color_map()
+
+        else:
+            print("Invalid map choice")
+            return
+
+        self.colormap = cmap
+
+    def generate_color_map(self):
+        """
+        Method which generates evenly spaced colors for plotting classes
+
+        Scope here to make dynamic colormap which changes based on how many
+        classes are present in a frame.
+        :return:
+        """
+        hues = np.linspace(0, 179, num=len(CLASS_LIST), dtype=int)
+        hsv_colors = []
+        for hue in hues:
+            hsv_colors.append((hue, 255, 255))
+
+        rgb_colors = []
+        for hsv_color in hsv_colors:
+            rgb_colors.append(cv2.cvtColor(np.uint8([[hsv_color]]), cv2.COLOR_HSV2RGB))
+
+        return rgb_colors
+
+    def generate_grayscale_map(self, band, file_path=abs_coeff_file):
+        """
+        Returns a map of scalar values based on given absorption coefficients.
+        Output can be used as greyscale colormap for plotting segmentation results
+        :param: band: frequency band to get absorption coefficients from [125,250,500,1000,2000,4000]
+        :param file_path: path to file containing absorption coefficients
+        :return: Grayscale map based on absorption coefficients at a given freq band
+        """
+        band = 4000 if band is None else band  # Set band to 4000 Hz if no value set.
+
+        with open(file_path) as csvfile:
+            read_csv = csv.reader(csvfile, delimiter=',')
+            headers = next(read_csv, None)  # Get headers in csv file
+
+            if str(band) not in headers:
+                print("Invalid frequency band")
+                return
+            else:
+                index = headers.index(str(band))
+
+            abs_coeffs = []
+            for row in read_csv:
+                abs_coeffs.append(float(row[index]))  # Get abs coeff for each material at given freq band as float
+
+        # Return absorption coefficients interpolated between [0, 255] for plotting in OpenCV
+        return np.interp(abs_coeffs, [min(abs_coeffs), max(abs_coeffs)], [0, 255]).astype(int)
+
+
 def class_to_pixel(c, t='even'):
     """
-    Function to convert int values to tuples
+    Function to convert an integer class map to tuple pixel map
     :param c: 2D array of int values between 0 and 22 (material segmentation output)
     :param t: type of color map to use
         even: evenly spaced RGB colors (evenly spaced hue values in HSV space and converted)
@@ -127,14 +223,14 @@ def class_to_pixel(c, t='even'):
     :return: np array suitable for plotting with cv2. Each class represented by a seperate colour.
     """
 
-    color_map = even_color_map if t == 'even' else abs_color_map  # Use specified color map
+    color_map = even_color_map if t == 'even' else grayscale  # Use specified color map
     return np.array([[color_map[class_num] for class_num in row] for row in c], dtype=np.uint8)
 
 
-def get_class_map(network_output, map_type='even'):
+def get_pixel_map(network_output, map_type='even'):
     """
-    Function to generate a class map which can be plotted by OpenCV
-    :param network_output:
+    Function to generate a pixel map (from network output) which can be plotted by OpenCV
+    :param network_output: output from network (inference on GPU or NCS)
     :param map_type: type of color map to use ('even' or 'abs')
     :return: an array of tuples to be plotted by OpenCV. The tuples define pixel values
     """
@@ -146,6 +242,40 @@ def get_class_map(network_output, map_type='even'):
     pixel_map = class_to_pixel(class_map, map_type)  # Convert to format suitable for plotting with OpenCV, i.e. array of pixels
 
     return pixel_map
+
+
+def get_coefficients(band, file_path=abs_coeff_file):
+    """
+    Function returning a dict of materials and corresponding absorption coefficient lists
+    :param: band: frequency band to get absorption coefficients from [125,250,500,1000,2000,4000]
+    :param file_path: path to file containing absorption coefficients
+    :return:
+    """
+
+    with open(file_path) as csvfile:
+        read_csv = csv.reader(csvfile, delimiter=',')
+        headers = next(read_csv, None)  # Get headers in csv file
+
+        if str(band) not in headers:
+            print("Invalid frequency band")
+            return
+        else:
+            index = headers.index(str(band))
+
+        print("headers: ")
+        print(headers)
+
+        abs_coeffs = []
+        for row in read_csv:
+            abs_coeffs.append(float(row[index]))  # Get abs coeff for each material at given freq band as float
+
+        return abs_coeffs
+
+
+"""
+Following functions should be moved outside of this script to script which also handles segmentation.
+This script is for plotting/post-processing functions
+"""
 
 
 def get_average_prob_maps(network_outputs, shape, pad=0):

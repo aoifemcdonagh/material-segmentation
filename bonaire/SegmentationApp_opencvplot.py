@@ -5,8 +5,7 @@ from PIL import ImageTk
 import tkinter as tk
 import threading
 from bonaire.gpu_segment import segment
-import ncs_demos.ncs_utilities as utils
-from bonaire.minc_plotting import get_class_plot
+import bonaire.plotting_utils as utils
 import cv2
 
 
@@ -52,7 +51,7 @@ class SegmentationApp:
 
                 # image processing is done by caffe before feeding to CNN
                 results = segment(frame, pad=self.padding)
-                class_map = utils.get_class_map(results)
+                class_map = utils.get_pixel_map(results)
                 class_map = Image.fromarray(class_map)
                 class_map = ImageTk.PhotoImage(class_map)
 

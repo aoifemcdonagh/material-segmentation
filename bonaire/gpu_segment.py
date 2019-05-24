@@ -168,6 +168,7 @@ def remove_padding(im, pad=0):
 def classify(im, caffemodel=None):
     """
     Function performing material classification across a whole image of arbitrary size.
+    This function can be called if no upsampling is desired
 
     :param im: image preloaded using caffe.io.load_image()
     :param caffemodel: name of .caffemodel file

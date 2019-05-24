@@ -1,6 +1,6 @@
 # This script performs continuous segmentation with pyramidal upsampling on video/camera stream
 
-import ncs_demos.ncs_utilities as utils
+import bonaire.plotting_utils as utils
 from bonaire.gpu_segment import segment
 import cv2
 import logging as log
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         RGBframe = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         results = segment(RGBframe, args.padding, args.model)
-        class_map = utils.get_class_map(results)
+        class_map = utils.get_pixel_map(results)
 
         cv2.imshow('class map', class_map)
         cv2.imshow('frame', frame)

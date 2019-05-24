@@ -1,5 +1,7 @@
+# UNFINISHED, not referenced by any other files
 # Script containing functions for plotting demo results
-
+# Intended to have everything plotted in OpenCV
+# For developing the GUI, it may be easier to have plotting occur in the GUI script?
 
 #import cv2
 import numpy as np

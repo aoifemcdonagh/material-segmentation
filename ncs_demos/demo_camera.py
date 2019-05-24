@@ -6,7 +6,7 @@ from openvino.inference_engine import IENetwork, IEPlugin
 import logging as log
 import argparse
 sys.path.insert(0, "../")  # add sys path to find ncs demos
-import ncs_demos.ncs_utilities as utils
+import bonaire.plotting_utils as utils
 
 
 def build_argparser():
@@ -121,14 +121,14 @@ if __name__ == "__main__":
             if args.upsample:
                 upsample_start = time.time()
                 av_prob_maps = utils.get_average_prob_maps([result], [h,w], pad=args.padding)
-                class_map = utils.get_class_map(av_prob_maps)
+                class_map = utils.get_pixel_map(av_prob_maps)
                 log.info("Processing time with upsampling: {:.3f} ms".format((time.time() - upsample_start) * 1000))
                 cv2.putText(class_map, inf_time_message, (15, 15), cv2.FONT_HERSHEY_COMPLEX, 0.5, (200, 10, 10), 1)
                 log.info("Inference time: {:.3f} ms".format(inf_time*1000))
 
             else:
                 class_processing_start = time.time()
-                class_map = utils.get_class_map(result)
+                class_map = utils.get_pixel_map(result)
                 #class_map = result['prob'][0].argmax(axis=0)
                 log.info("Inference time: {:.3f} ms".format(inf_time*1000))
                 log.info("Class map processing time: {:.3f} ms".format((time.time() - class_processing_start)*1000))
