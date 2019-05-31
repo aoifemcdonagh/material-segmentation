@@ -6,94 +6,14 @@ import logging as log
 import time
 import sys
 import csv
+import PIL
 from PIL import Image
 from PIL import ImageTk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 import cv2
 
-abs_coeff_file = "../abs_coefficients.csv"
-
-#  List of tuples defining colours for each class.
-classes_color_map = [
-    (150, 150, 150),
-    (58, 55, 169),
-    (211, 51, 17),
-    (157, 80, 44),
-    (23, 95, 189),
-    (210, 133, 34),
-    (76, 226, 202),
-    (101, 138, 127),
-    (223, 91, 182),
-    (80, 128, 113),
-    (235, 155, 55),
-    (44, 151, 243),
-    (159, 80, 170),
-    (239, 208, 44),
-    (128, 50, 51),
-    (82, 141, 193),
-    (9, 107, 10),
-    (223, 90, 142),
-    (50, 248, 83),
-    (178, 101, 130),
-    (71, 30, 204),
-    (30, 30, 30),
-    (90, 90, 90)
-]
-
-# List of HSV color pixel values for each class
-hsv_color_map = [(0, 255, 255),
- (8, 255, 255),
- (16, 255, 255),
- (24, 255, 255),
- (32, 255, 255),
- (40, 255, 255),
- (48, 255, 255),
- (56, 255, 255),
- (65, 255, 255),
- (73, 255, 255),
- (81, 255, 255),
- (89, 255, 255),
- (97, 255, 255),
- (105, 255, 255),
- (113, 255, 255),
- (122, 255, 255),
- (130, 255, 255),
- (138, 255, 255),
- (146, 255, 255),
- (154, 255, 255),
- (162, 255, 255),
- (170, 255, 255),
- (179, 255, 255)]
-
-# RGB color map with 23 evenly spaced colors (Evenly spaced in HSV spectrum and converted)
-even_color_map = [
-    (255, 0, 0),
-    (255, 68, 0),
-    (255, 136, 0),
-    (255, 204, 0),
-    (238, 255, 0),
-    (170, 255, 0),
-    (102, 255, 0),
-    (34, 255, 0),
-    (0, 255,  43),
-    (0, 255, 111),
-    (0, 255, 179),
-    (0, 255, 247),
-    (0, 195, 255),
-    (0, 127, 255),
-    (0, 59, 255),
-    (17, 0, 255),
-    (85, 0, 255),
-    (153, 0, 255),
-    (221, 0, 255),
-    (255, 0, 221),
-    (255, 0, 153),
-    (255, 0, 85),
-    (255, 0, 8),
-
-]
-
-grayscale = [  7,  28,   0,  15,   5,  72,   0,  15,   5,  20,   5,   5,   5,
-        92, 190, 255,   1,  15,  15, 115, 115, 115]
+abs_coeff_file = "/home/aoife/projects/bonaire/abs_coefficients.csv"
 
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",
@@ -125,40 +45,57 @@ SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
 
 class PlottingEngine:
     def __init__(self):
-        self.colormap = None
+        self.colormap = None  # Colormap is always RGB. Keep this in mind when using OpenCV which assumes BGR format.
 
-
-    def process(self, results, color_map):
+    def process(self, network_output):
         """
-        Function which returns an image ready to be shown in Tkinter GUI
+        Function which returns an image and a colorbar to be shown in Tkinter GUI
         :param results: Network output
         :param color_map: colormap
         :return:
         """
 
-        if color_map is not None:
-            self.set_colormap(color_map)
+        if self.colormap is None:  # Initialise a colormap if none was set.
+            self.set_colormap("classes")
 
-        pixel_map = get_pixel_map(results, self.colormap)
+        # Get class map. used to generate pixel map and color bar.
+        if type(network_output) is dict:  # If the input value is an unmodified 'network output' (from a single image)
+            class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+        else:  # if average probability maps are passed in in case of upsampling & averaging
+            class_map = network_output.argmax(axis=0)  # Get highest probability class at each location
 
-        image = Image.fromarray(pixel_map)
-        image = ImageTk.PhotoImage(image)
+        pixel_map = self.get_pixel_map(class_map)
 
-        return image
+        colorbar = self.create_colorbar(class_map)
 
-    def set_colormap(self, map_type, freq_band=None):
+        return pixel_map, colorbar
+
+    def get_pixel_map(self, class_map):
+        """
+        Function to generate a pixel map (from network output) which can be plotted by OpenCV
+        :param network_output: output from network (inference on GPU or NCS)
+        :return: an array of tuples to be plotted by OpenCV. The tuples define pixel values
+        """
+
+        # Convert to format suitable for plotting with OpenCV, i.e. array of pixels
+        pixel_map = np.array([[self.colormap[class_num] for class_num in row] for row in class_map], dtype=np.uint8)
+        return pixel_map
+
+    def set_colormap(self, map_type, freq=None):
         """
         Set desired colormap for plotting
         :param map_type: string specifying what type of colormap to use
-        :param freq_band: int denoting frequency band for which to create color map based on material absorption coeffs
+        :param freq: int denoting frequency band for which to create color map based on material absorption coeffs
         :return:
         """
 
         if map_type == "absorption":
-            cmap = self.generate_grayscale_map(freq_band)
+            cmap = self.generate_grayscale_map(freq)
+            print("Colormap = absorption")
 
         elif map_type == "classes":
             cmap = self.generate_color_map()
+            print("Colormap = classes")
 
         else:
             print("Invalid map choice")
@@ -181,7 +118,7 @@ class PlottingEngine:
 
         rgb_colors = []
         for hsv_color in hsv_colors:
-            rgb_colors.append(cv2.cvtColor(np.uint8([[hsv_color]]), cv2.COLOR_HSV2RGB))
+            rgb_colors.append(cv2.cvtColor(np.uint8([[hsv_color]]), cv2.COLOR_HSV2RGB)[0][0])
 
         return rgb_colors
 
@@ -209,74 +146,101 @@ class PlottingEngine:
             for row in read_csv:
                 abs_coeffs.append(float(row[index]))  # Get abs coeff for each material at given freq band as float
 
-        # Return absorption coefficients interpolated between [0, 255] for plotting in OpenCV
-        return np.interp(abs_coeffs, [min(abs_coeffs), max(abs_coeffs)], [0, 255]).astype(int)
+            # absorption coefficients interpolated between [0, 255]
+            interpolated_coeffs = np.interp(abs_coeffs, [min(abs_coeffs), max(abs_coeffs)], [0, 255]).astype(int)
 
+            hsv_colors = []
+            for coeff in interpolated_coeffs:
+                hsv_colors.append((0, 0, (255 - coeff)))
 
-def class_to_pixel(c, t='even'):
+            rgb_colors = []
+            for hsv_color in hsv_colors:
+                rgb_colors.append(cv2.cvtColor(np.uint8([[hsv_color]]), cv2.COLOR_HSV2RGB)[0][0])
+
+            return rgb_colors
+
+    def create_colorbar(self, class_map):
+        """
+        Function for creating a plot of colorbar to display beside segmentation results.
+        Creates colorbar for values in self.colormap
+        :return:
+        """
+
+        print("Creating colorbar using color map: " + str(self.colormap))
+
+        #modified_values = range(0, len(unique_values))  # list in range 0 - len(unique_values)
+        #value_dict = {a: b for (a, b) in zip(unique_values, modified_values)}
+
+        unique_values = np.unique(class_map)  # array of unique values in class_map
+        print(unique_values)
+        b = np.ones([len(unique_values), 5])
+        bar = (b * unique_values[:, np.newaxis]).astype(int)
+
+        colorbar_pixels = self.get_pixel_map(bar)
+
+        # Creating a color bar to display
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        # Create the colormap
+        # Get color map in range [0, 1]
+        #color_map = [[x / 255 for x in rgb_tuple] for rgb_tuple in self.colormap]
+        # number of bins is the number of classes
+        #cm = LinearSegmentedColormap.from_list("minc_material_map", color_map, N=23)
+        ax.imshow(colorbar_pixels)
+        labels = self.get_tick_labels(unique_values)
+        ax.set_yticks(np.arange(0, len(unique_values)))
+        ax.set_yticklabels(labels)
+        return fig
+
     """
-    Function to convert an integer class map to tuple pixel map
-    :param c: 2D array of int values between 0 and 22 (material segmentation output)
-    :param t: type of color map to use
-        even: evenly spaced RGB colors (evenly spaced hue values in HSV space and converted)
-        abs: color map based on absorption coeffs for each material
-    :return: np array suitable for plotting with cv2. Each class represented by a seperate colour.
+    def create_opencv_colorbar(self, class_map):
+        unique_values = np.unique(class_map)  # array of unique values in class_map
+        unique_values = np.repeat(unique_values, 50)
+        b = np.ones([len(unique_values), 50])
+        bar = (b * unique_values[:, np.newaxis]).astype(int)
+
+        # Convert bar of class nums to pixel values
+        pixel_map = np.array([[self.colormap[class_num] for class_num in row] for row in bar], dtype=np.uint8)
+
+        # Need to convert map of pixels to image.
+        image = Image.fromarray(pixel_map)
+        image = ImageTk.PhotoImage(image)
+
+        return image
     """
 
-    color_map = even_color_map if t == 'even' else grayscale  # Use specified color map
-    return np.array([[color_map[class_num] for class_num in row] for row in c], dtype=np.uint8)
+    def get_tick_labels(self, class_numbers):
+        """
+        Function generating tick labels appropriate to each classified image
+        """
+        class_names = []
+        for number in class_numbers:
+            class_names.append(CLASS_LIST.get(number))
+
+        tick_labels = []
+        for (number, name) in zip(class_numbers, class_names):
+            tick_labels.append(str(number) + ": " + name)
+
+        return tick_labels
 
 
-def get_pixel_map(network_output, map_type='even'):
+"""
+Following functions are used by NCS demo scripts
+
+get_average_prob_maps is used in demo_camera.py to upsample on one image instead of 3
+"""
+
+
+def get_pixel_map(class_map, colormap):
     """
     Function to generate a pixel map (from network output) which can be plotted by OpenCV
     :param network_output: output from network (inference on GPU or NCS)
-    :param map_type: type of color map to use ('even' or 'abs')
     :return: an array of tuples to be plotted by OpenCV. The tuples define pixel values
     """
-    if type(network_output) is dict:  # If the input value is an unmodified 'network output' (from a single image)
-        class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
-    else:  # if average probability maps are passed in in case of upsampling & averaging
-        class_map = network_output.argmax(axis=0)  # Get highest probability class at each location
 
-    pixel_map = class_to_pixel(class_map, map_type)  # Convert to format suitable for plotting with OpenCV, i.e. array of pixels
-
+    # Convert to format suitable for plotting with OpenCV, i.e. array of pixels
+    pixel_map = np.array([[colormap[class_num] for class_num in row] for row in class_map], dtype=np.uint8)
     return pixel_map
-
-
-def get_coefficients(band, file_path=abs_coeff_file):
-    """
-    Function returning a dict of materials and corresponding absorption coefficient lists
-    :param: band: frequency band to get absorption coefficients from [125,250,500,1000,2000,4000]
-    :param file_path: path to file containing absorption coefficients
-    :return:
-    """
-
-    with open(file_path) as csvfile:
-        read_csv = csv.reader(csvfile, delimiter=',')
-        headers = next(read_csv, None)  # Get headers in csv file
-
-        if str(band) not in headers:
-            print("Invalid frequency band")
-            return
-        else:
-            index = headers.index(str(band))
-
-        print("headers: ")
-        print(headers)
-
-        abs_coeffs = []
-        for row in read_csv:
-            abs_coeffs.append(float(row[index]))  # Get abs coeff for each material at given freq band as float
-
-        return abs_coeffs
-
-
-"""
-Following functions should be moved outside of this script to script which also handles segmentation.
-This script is for plotting/post-processing functions
-"""
-
 
 def get_average_prob_maps(network_outputs, shape, pad=0):
     """

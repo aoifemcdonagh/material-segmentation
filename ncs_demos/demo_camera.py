@@ -67,6 +67,9 @@ if __name__ == "__main__":
         input_stream = args.input
         assert os.path.isfile(args.input), "Specified input file doesn't exist"
 
+    engine = utils.PlottingEngine()
+    engine.set_colormap("classses")
+
     cap = cv2.VideoCapture(input_stream)
 
     cur_request_id = 0
@@ -128,7 +131,7 @@ if __name__ == "__main__":
 
             else:
                 class_processing_start = time.time()
-                class_map = utils.get_pixel_map(result)
+                class_map, _ = engine.process(result)
                 #class_map = result['prob'][0].argmax(axis=0)
                 log.info("Inference time: {:.3f} ms".format(inf_time*1000))
                 log.info("Class map processing time: {:.3f} ms".format((time.time() - class_processing_start)*1000))
