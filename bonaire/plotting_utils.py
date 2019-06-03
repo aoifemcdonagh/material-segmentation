@@ -87,11 +87,9 @@ class PlottingEngine:
 
         if map_type == "absorption":
             cmap = self.generate_grayscale_map(freq)
-            print("Colormap = absorption")
 
         elif map_type == "classes":
             cmap = self.generate_color_map()
-            print("Colormap = classes")
 
         else:
             print("Invalid map choice")
@@ -163,14 +161,11 @@ class PlottingEngine:
         :return:
         """
 
-        print("Creating colorbar using color map: " + str(self.colormap))
-
         #modified_values = range(0, len(unique_values))  # list in range 0 - len(unique_values)
         #value_dict = {a: b for (a, b) in zip(unique_values, modified_values)}
 
         #unique_values = np.arange(0,23)
         unique_values = np.unique(class_map)  # array of unique values in class_map
-        print(unique_values)
         b = np.ones([len(unique_values), 4])
         bar = (b * unique_values[:, np.newaxis]).astype(int)
 
