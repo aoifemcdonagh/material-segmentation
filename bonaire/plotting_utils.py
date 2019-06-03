@@ -6,11 +6,7 @@ import logging as log
 import time
 import sys
 import csv
-import PIL
-from PIL import Image
-from PIL import ImageTk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 import cv2
 
 abs_coeff_file = "/home/aoife/projects/bonaire/abs_coefficients.csv"
@@ -173,13 +169,13 @@ class PlottingEngine:
 
         unique_values = np.unique(class_map)  # array of unique values in class_map
         print(unique_values)
-        b = np.ones([len(unique_values), 5])
+        b = np.ones([len(unique_values), 4])
         bar = (b * unique_values[:, np.newaxis]).astype(int)
 
         colorbar_pixels = self.get_pixel_map(bar)
 
         # Creating a color bar to display
-        fig = Figure()
+        fig = plt.Figure()
         ax = fig.add_subplot(111)
         # Create the colormap
         # Get color map in range [0, 1]
@@ -190,6 +186,7 @@ class PlottingEngine:
         labels = self.get_tick_labels(unique_values)
         ax.set_yticks(np.arange(0, len(unique_values)))
         ax.set_yticklabels(labels)
+
         return fig
 
     """

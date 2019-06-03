@@ -7,36 +7,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
 from bonaire.gpu_segment import segment
 import bonaire.plotting_utils as utils
+import numpy as np
 import cv2
 
-
-# RGB color map with 23 evenly spaced colors (Evenly spaced in HSV spectrum and converted)
-even_color_map = [
-    (255, 0, 0),
-    (255, 68, 0),
-    (255, 136, 0),
-    (255, 204, 0),
-    (238, 255, 0),
-    (170, 255, 0),
-    (102, 255, 0),
-    (34, 255, 0),
-    (0, 255,  43),
-    (0, 255, 111),
-    (0, 255, 179),
-    (0, 255, 247),
-    (0, 195, 255),
-    (0, 127, 255),
-    (0, 59, 255),
-    (17, 0, 255),
-    (85, 0, 255),
-    (153, 0, 255),
-    (221, 0, 255),
-    (255, 0, 221),
-    (255, 0, 153),
-    (255, 0, 85),
-    (255, 0, 8),
-
-]
 
 class SegmentationApp:
     def __init__(self, vc, pad):
@@ -108,9 +81,14 @@ class SegmentationApp:
 
     def segment(self, map_type):
         """
-        Function for performing segmentation
+        Function for performing and plotting segmentation
         :return:
         """
+
+        # Check if there are any Canvas objects in GUI children and destroy them
+        for child in list(self.root.children.values()):
+            if child.widgetName == 'canvas':
+                child.destroy()
 
         try:
             # convert current frame to RGB for processing by 'gpu_segment'
@@ -127,19 +105,14 @@ class SegmentationApp:
             image = Image.fromarray(pixels)
             image = ImageTk.PhotoImage(image)
 
-            # if panels are None, initialise them
-            if self.panel is None:
-                self.panel = tk.Label(image=image)
-                self.panel.image = image
-                self.panel.pack(side="left", padx=10, pady=10)
-            # otherwise, simply update the panel
-            else:
-                self.panel.configure(image=image)
-                self.panel.image = image
+            colorbar = FigureCanvasTkAgg(colorbar, master=self.root)
+            colorbar.get_tk_widget().pack(side="right", padx=10, pady=10)
 
-            canvas = FigureCanvasTkAgg(colorbar)
-            self.colorbar_panel = canvas.get_tk_widget().pack(side="right", padx=10, pady=10)
-            self.colorbar_panel.draw()
+            # Update panel with segmented image.
+            self.panel.configure(image=image)
+            self.panel.image = image
+
+            self.root.update_idletasks()
 
         except RuntimeError:
             print("[INFO] caught a RuntimeError")
@@ -169,6 +142,7 @@ class SegmentationApp:
     def start_video(self):
         self.stopVideo.clear()  # Clear stop video flag
         print("clearing stopVideo flag")
+        self.panel.destroy()
 
     def segment_classes(self):
         self.stopVideo.set()  # Stop reading from video stream and segment current frame
