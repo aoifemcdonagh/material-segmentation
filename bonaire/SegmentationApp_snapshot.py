@@ -7,7 +7,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
 from bonaire.gpu_segment import segment
 import bonaire.plotting_utils as utils
-import numpy as np
 import cv2
 
 
@@ -41,11 +40,6 @@ class SegmentationApp:
         # Button to start video stream display
         btn_start_display = tk.Button(button_frame, text="start video", command=self.start_video)
         btn_start_display.pack(side="right", padx=10, pady=10)
-
-        # Start a thread which reads from camera/video file and displays frames
-        self.stopVideo = threading.Event()
-        self.video_thread = threading.Thread(target=self.video_loop, args=())
-        self.video_thread.start()
 
         # set a callback to handle when the window is closed
         self.root.wm_title("Material Segmentation")
@@ -140,9 +134,10 @@ class SegmentationApp:
 
 
     def start_video(self):
-        self.stopVideo.clear()  # Clear stop video flag
-        print("clearing stopVideo flag")
-        self.panel.destroy()
+        # Start a thread which reads from camera/video file and displays frames
+        self.stopVideo = threading.Event()
+        self.video_thread = threading.Thread(target=self.video_loop, args=())
+        self.video_thread.start()
 
     def segment_classes(self):
         self.stopVideo.set()  # Stop reading from video stream and segment current frame

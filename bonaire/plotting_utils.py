@@ -143,7 +143,8 @@ class PlottingEngine:
                 abs_coeffs.append(float(row[index]))  # Get abs coeff for each material at given freq band as float
 
             # absorption coefficients interpolated between [0, 255]
-            interpolated_coeffs = np.interp(abs_coeffs, [min(abs_coeffs), max(abs_coeffs)], [0, 255]).astype(int)
+            #interpolated_coeffs = np.interp(abs_coeffs, [min(abs_coeffs), max(abs_coeffs)], [0, 255]).astype(int)
+            interpolated_coeffs = np.interp(abs_coeffs, [0, 1], [0, 255]).astype(int)
 
             hsv_colors = []
             for coeff in interpolated_coeffs:
@@ -167,6 +168,7 @@ class PlottingEngine:
         #modified_values = range(0, len(unique_values))  # list in range 0 - len(unique_values)
         #value_dict = {a: b for (a, b) in zip(unique_values, modified_values)}
 
+        #unique_values = np.arange(0,23)
         unique_values = np.unique(class_map)  # array of unique values in class_map
         print(unique_values)
         b = np.ones([len(unique_values), 4])
