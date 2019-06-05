@@ -1,18 +1,23 @@
-# import the necessary packages
+# This script is based off SegmentationApp.py. Modified to perform inference on NCS
+
 from PIL import Image
 from PIL import ImageTk
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
-from bonaire.gpu_segment import segment  # consider renaming?
 import bonaire.plotting_utils as utils
+from ncs_demos import ncs_segment
 import cv2
+import os
+import numpy as np
+from openvino.inference_engine import IENetwork, IEPlugin
 
 
 class SegmentationApp:
-    def __init__(self, vc, pad):
+    def __init__(self, vc, model_path, pad):
         self.vc = vc  # video capture
         self.padding = pad
+        self.model = model_path
         self.frame = None
         self.stopVideo = None  # Flag for stopping video loop
         self.colorbar_frame = None
@@ -20,6 +25,7 @@ class SegmentationApp:
         self.root = tk.Tk()
         self.panel = None
         self.colorbar_panel = None
+        self.resolution = [500, 700]
 
         button_frame = tk.Frame()
         button_frame.pack(side="bottom")
@@ -44,6 +50,29 @@ class SegmentationApp:
         self.root.wm_title("Material Segmentation")
         self.root.wm_protocol("WM_DELETE_WINDOW", self.on_close)
 
+        # Set up NCS
+        # Want to set up model once so that it doesn't have to be loaded multiple times
+        model_xml = model_path
+        model_bin = os.path.splitext(model_xml)[0] + ".bin"
+
+        # Plugin initialization for Movidius stick
+        plugin = IEPlugin(device="MYRIAD")
+
+        # Read IR
+        net = IENetwork(model=model_xml, weights=model_bin)
+
+        self.input_blob = next(iter(net.inputs))
+
+        n = 1
+        c = 3
+        h = self.resolution[0]
+        w = self.resolution[1]
+
+        net.reshape({self.input_blob: (n, c, h, w)})
+
+        # Loading model to the plugin
+        self.exec_net = plugin.load(network=net)  # Loading network multiple times takes a long time
+
     def video_loop(self):
         """
         Function which displays frames from video stream
@@ -56,14 +85,8 @@ class SegmentationApp:
             _, self.frame = self.vc.read()
 
             # If the frame is too large to plot, make it smaller.
-            if self.frame.shape[0] > 720:
-                scale = 720/self.frame.shape[0]
-                newH, newW = int(self.frame.shape[0]*scale), int(self.frame.shape[1]*scale)
-                self.frame = cv2.resize(self.frame, (newW, newH), interpolation=cv2.INTER_AREA)
-            elif self.frame.shape[1] > 1280:
-                scale = 1280 / self.frame.shape[1]
-                newH, newW = self.frame.shape[0] * scale, self.frame.shape[1] * scale
-                self.frame = cv2.resize(self.frame, (newW, newH), interpolation=cv2.INTER_AREA)
+            if self.frame.shape[0] > 500 or self.frame.shape[1] > 800:
+                self.frame = cv2.resize(self.frame, (1280, 720), interpolation=cv2.INTER_AREA)
 
             frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)  # Convert to RGB before plotting
 
@@ -81,7 +104,7 @@ class SegmentationApp:
                 self.panel.configure(image=frame)
                 self.panel.image = frame
 
-    def segment(self, map_type):  # consider renaming to avoid confusion with gpu_segment.segment
+    def segment(self, map_type):
         """
         Function for performing and plotting segmentation
         :return:
@@ -96,8 +119,14 @@ class SegmentationApp:
             # convert current frame to RGB for processing by 'gpu_segment'
             frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
 
-            # image processing is done by caffe before feeding to CNN
-            results = segment(frame, pad=self.padding)
+            in_frame = cv2.resize(frame, (self.resolution[1], self.resolution[0]))  # Does resize() crop or shrink image dimensions?
+            in_frame = in_frame.transpose((2, 0, 1))  # Change data layout from HWC to CHW
+            in_frame = in_frame.reshape((1, 3, self.resolution[0], self.resolution[1]))  # adding n dimension
+            self.exec_net.infer(inputs={self.input_blob: in_frame})
+
+            # Parse detection results of the current request
+            results = self.exec_net.requests[0].outputs
+            results = utils.get_average_prob_maps(results, [self.resolution[0], self.resolution[1]])
 
             engine = utils.PlottingEngine()
             engine.set_colormap(map_type=map_type, freq=1000)  # Have colormap set by button in GUI in future
@@ -139,7 +168,6 @@ class SegmentationApp:
                 self.panel.image = image
         except RuntimeError:
             print("[INFO] caught a RuntimeError")
-
 
     def start_video(self):
         # Check if there are any Canvas objects in GUI children and destroy them

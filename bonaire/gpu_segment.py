@@ -88,6 +88,7 @@ def get_average_prob_maps(network_outputs, shape, pad=0):
     return np.array(averaged_prob_maps)
 
 
+# This function not used anymore. Here for reference
 def upsample(prob_maps_multiple_images, output_shape):
     """
     Function for performing upsamping of probability maps

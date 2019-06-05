@@ -1,18 +1,15 @@
+# Script containing functions for performing image segmentation on raspberry pi environment with
+# Movidius Neural Compute Stick
+
 # Script for performing pyramidal upsampling and segmentation on NCS
 # Segments a single image
 # Very slow since network has to be loaded every time it's reshaped, i.e. 3 times per segmented image.
 # This script implements own segment function customised for NCS
-import sys
 import os
-import cv2
 from PIL import Image
 import skimage
 from openvino.inference_engine import IENetwork, IEPlugin
-import logging as log
 import numpy as np
-from time import time
-import argparse
-from bonaire import minc_plotting as minc_plot
 
 CLASS_LIST = {0: "brick",
               1: "carpet",
@@ -41,23 +38,45 @@ CLASS_LIST = {0: "brick",
 SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # changed scales
 
 
-def build_argparser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--model", help="Path to an .xml file with a trained model.", required=True, type=str)
-    parser.add_argument("-i", "--image", help="Path to a single image file", required=True,
-                        type=str)
-    parser.add_argument("-p", "--padding", help="Number of pixels of padding to add", type=int, default=0)
-    return parser
-
-
-def segment(network_outputs, im, pad=0):
+def segment(im, model_path, pad=0):
     """
     Function which takes a list of network outputs and returns an upsampled classification map suitable for plotting
-    :param network_outputs: list of network outputs
     :return: upsampled classification map
     """
 
-    return get_average_prob_maps(network_outputs, im.shape, pad)
+    model_xml = model_path
+    model_bin = os.path.splitext(model_xml)[0] + ".bin"
+
+    # Plugin initialization for Movidius stick
+    plugin = IEPlugin(device="MYRIAD")
+
+    # Read IR
+    net = IENetwork(model=model_xml, weights=model_bin)
+
+    input_blob = next(iter(net.inputs))
+    out_blob = next(iter(net.outputs))
+    net.batch_size = 1  # Should be 1
+
+    # Read and pre-process input images
+    # Image loaded as type float32. Works as expected with NCS
+    # float16 was thought to be required by NCS but skimage.transform.rescale throws error for this type.
+    processed_images = preprocess_image(im, pad=pad)
+    results = []
+
+    for image in processed_images:
+        # Reshape input layer for image
+        net.reshape({input_blob: (1, image.shape[0], image.shape[1], image.shape[2])})
+
+        # Loading model to the plugin
+        # Model needs to be loaded every time network input is resized.
+        exec_net = plugin.load(network=net)  # Loading network multiple times takes a long time
+
+        # Start sync inference
+        results.append(exec_net.infer(inputs={input_blob: image}))
+
+    segmented_results = get_average_prob_maps(results, im.shape, pad)
+
+    return segmented_results
 
 
 
@@ -154,58 +173,3 @@ def preprocess_image(im, pad=0):
     images = [image.transpose((2, 0, 1)) for image in images]  # Change data layout from HWC to CHW
 
     return images
-
-
-if __name__ == "__main__":
-    log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.INFO, stream=sys.stdout)  # Configure logging
-    args = build_argparser().parse_args()
-
-    model_xml = args.model
-    model_bin = os.path.splitext(model_xml)[0] + ".bin"
-
-    # Plugin initialization for Movidius stick
-    plugin = IEPlugin(device="MYRIAD")
-
-    # Read IR
-    log.info("Loading network files:\n\t{}\n\t{}".format(model_xml, model_bin))
-    net = IENetwork(model=model_xml, weights=model_bin)
-
-    log.info("Preparing input blobs")
-    input_blob = next(iter(net.inputs))
-    out_blob = next(iter(net.outputs))
-    net.batch_size = len(args.image)  # Should be 1
-
-    # Read and pre-process input images
-    # Image loaded as type float32. Works as expected with NCS
-    # float16 was thought to be required by NCS but skimage.transform.rescale throws error for this type.
-    im = cv2.imread(args.image).astype(np.float32)
-    processed_images = preprocess_image(im, pad=args.padding)
-    results = []
-
-    for image in processed_images:
-        # Reshape input layer for image
-        net.reshape({input_blob: (1, image.shape[0], image.shape[1], image.shape[2])})
-
-        # Loading model to the plugin
-        # Model needs to be loaded every time network input is resized.
-        log.info("Loading model to the plugin")
-        exec_net = plugin.load(network=net)  # Loading network multiple times takes a long time
-
-        # Start sync inference
-        log.info("Starting inference ")
-        t0 = time()
-        results.append(exec_net.infer(inputs={input_blob:image}))
-        log.info("Average running time of one iteration: {} ms".format((time() - t0) * 1000))
-
-    log.info("processing output blob")
-
-    segmented_results = segment(results, processed_images[1], pad=args.padding)
-
-    # Using matplitlib plotting for colorbar
-    minc_plot.plot_class_map(segmented_results)
-
-    #ncs_plot.plot_class_map(segmented_results)
-
-    log.info("done")
-
-    #output = result[out_blob]

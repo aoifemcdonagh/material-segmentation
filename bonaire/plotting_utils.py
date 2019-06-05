@@ -9,7 +9,7 @@ import csv
 import matplotlib.pyplot as plt
 import cv2
 
-abs_coeff_file = "/home/aoife/projects/bonaire/abs_coefficients.csv"
+abs_coeff_file = "abs_coefficients.csv"
 
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",

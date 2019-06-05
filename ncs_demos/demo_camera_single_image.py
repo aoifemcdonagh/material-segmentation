@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # Parse detection results of the current request
     result = exec_net.requests[cur_request_id].outputs
     av_prob_maps = utils.get_average_prob_maps([result], [h,w])  # Performing upsampling
-    class_map = utils.get_pixel_map(av_prob_maps)
+    class_map = utils.get_pixel_map(av_prob_maps, )
 
     cv2.imshow('class map', class_map)
     key = cv2.waitKey()
