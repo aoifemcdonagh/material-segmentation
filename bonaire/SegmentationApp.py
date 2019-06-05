@@ -134,6 +134,11 @@ class SegmentationApp:
 
 
     def start_video(self):
+        # Check if there are any Canvas objects in GUI children and destroy them
+        for child in list(self.root.children.values()):
+            if child.widgetName == 'canvas':
+                child.destroy()
+
         # Start a thread which reads from camera/video file and displays frames
         self.stopVideo = threading.Event()
         self.video_thread = threading.Thread(target=self.video_loop, args=())

@@ -33,7 +33,7 @@ if __name__ == '__main__':
     log.info("Setting up camera")
 
     video = cv2.VideoCapture(input_stream)
-    time.sleep(2.0)
+    #time.sleep(2.0)
 
     # start the app
     sa = SegmentationApp(video, args.padding)
