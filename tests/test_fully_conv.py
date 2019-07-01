@@ -8,7 +8,7 @@ import sys
 caffe.set_mode_gpu()
 
 # Load the fully convolutional network
-net=caffe.Net('deploy-googlenet-conv.prototxt','minc-googlenet-conv.caffemodel', caffe.TEST)
+net=caffe.Net('../models/minc-googlenet-conv.prototxt','../models/minc-googlenet-conv.caffemodel', caffe.TEST)
 
 print(net.inputs)
 print(net.blobs['data'].data.shape)
@@ -25,8 +25,8 @@ transformer.set_raw_scale('data', 255.0)
 
 transformed_image = transformer.preprocess('data', im)
 
-out = net.forward_all(data=np.asarray([transformer.preprocess('data', im)]))
-print out['prob'][0].argmax(axis=0)
+out = net.forward_all(data=np.asarray([transformed_image]))
+print(out['prob'][0].argmax(axis=0))  # Print output map
 
-plt.imshow(im)
+plt.imshow(im)  # Show input image
 plt.show()

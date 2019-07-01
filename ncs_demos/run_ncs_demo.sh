@@ -1,0 +1,1 @@
+python 3 runGUI_NCS.py -i cam -p 100 -m ../models/OpenVINO_models/minc-googlenet-conv.xml
