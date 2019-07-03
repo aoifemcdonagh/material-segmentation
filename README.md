@@ -11,9 +11,6 @@ CUDA | https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
 CuDNN | https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html
 python 3.5+ |
 caffe 1.0.0 | https://github.com/adeelz92/Install-Caffe-on-Ubuntu-16.04-Python-3 Follow steps carefully since they depend on your CUDA, CuDNN and python versions
-numpy 1.14.3+ |
-matplotlib 2.2.3+ |
-scipy 0.17.0+ |
 OpenCV | Install using pip3, not during OpenVino install.
 OpenVino | https://software.intel.com/en-us/articles/get-started-with-neural-compute-stick Note untick OpenCV
 
