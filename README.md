@@ -1,4 +1,4 @@
-# MINC_model_testing
+# Material Segmentation using MINC dataset
 Set of files for testing models pretrained on MINC dataset
 
 **These scripts are still under development and subject to large changes.**
