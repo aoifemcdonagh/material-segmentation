@@ -1,0 +1,7 @@
+numpy
+pillow
+scikit-image
+argparse
+opencv-python==4.1.0
+python3-tk
+matplotlib
