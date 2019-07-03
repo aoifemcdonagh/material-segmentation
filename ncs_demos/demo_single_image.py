@@ -12,7 +12,7 @@ import logging as log
 import numpy as np
 from time import time
 import argparse
-from bonaire import minc_plotting as minc_plot
+from material_segmentation import minc_plotting as minc_plot
 
 classes_color_map = [
     (150, 150, 150),

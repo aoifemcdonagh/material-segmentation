@@ -2,7 +2,7 @@ import caffe
 import sys
 import skimage
 
-from bonaire import segment as resize, minc_plotting as minc_plot, minc_classify as minc_utils
+from material_segmentation import segment as resize, minc_plotting as minc_plot, minc_classify as minc_utils
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.image as mpimg

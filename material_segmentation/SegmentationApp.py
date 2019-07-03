@@ -4,8 +4,8 @@ from PIL import ImageTk
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
-from bonaire.gpu_segment import segment  # consider renaming?
-import bonaire.plotting_utils as utils
+from material_segmentation.gpu_segment import segment  # consider renaming?
+import material_segmentation.plotting_utils as utils
 import cv2
 
 

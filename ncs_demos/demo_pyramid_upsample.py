@@ -12,7 +12,7 @@ import logging as log
 import numpy as np
 from time import time
 import argparse
-from bonaire import minc_plotting as minc_plot
+from material_segmentation import minc_plotting as minc_plot
 
 CLASS_LIST = {0: "brick",
               1: "carpet",

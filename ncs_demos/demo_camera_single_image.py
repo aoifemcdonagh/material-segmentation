@@ -5,7 +5,7 @@ from openvino.inference_engine import IENetwork, IEPlugin
 import logging as log
 import argparse
 sys.path.insert(0, "../")  # add sys path to find ncs demos
-import bonaire.plotting_utils as utils
+import material_segmentation.plotting_utils as utils
 
 
 def build_argparser():

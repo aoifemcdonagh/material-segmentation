@@ -8,9 +8,9 @@ Optional inputs:
 """
 
 import argparse
-from bonaire import minc_plotting as minc_plot
+from material_segmentation import minc_plotting as minc_plot
 import caffe
-from bonaire.gpu_segment import classify
+from material_segmentation.gpu_segment import classify
 
 caffe.set_mode_gpu()
 

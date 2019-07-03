@@ -1,4 +1,4 @@
-from bonaire.SegmentationApp import SegmentationApp
+from material_segmentation.SegmentationApp import SegmentationApp
 import logging as log
 import caffe
 import sys

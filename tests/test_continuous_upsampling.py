@@ -1,7 +1,7 @@
 # This script performs continuous segmentation with pyramidal upsampling on video/camera stream
 
-import bonaire.plotting_utils as utils
-from bonaire.gpu_segment import segment
+import material_segmentation.plotting_utils as utils
+from material_segmentation.gpu_segment import segment
 import cv2
 import logging as log
 import argparse

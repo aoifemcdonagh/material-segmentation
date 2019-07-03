@@ -1,8 +1,8 @@
 # Script to test GPU segmentation via pyramidal method.
 import sys
 import numpy as np
-from bonaire import minc_plotting as minc_plot
-from bonaire.gpu_segment import segment
+from material_segmentation import minc_plotting as minc_plot
+from material_segmentation.gpu_segment import segment
 import skimage
 
 image_path = sys.argv[1]  # path to image to be segmented

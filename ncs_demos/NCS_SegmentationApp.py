@@ -5,7 +5,7 @@ from PIL import ImageTk
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
-import bonaire.plotting_utils as utils
+import material_segmentation.plotting_utils as utils
 from ncs_demos import ncs_segment
 import cv2
 import os

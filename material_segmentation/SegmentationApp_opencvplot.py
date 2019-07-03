@@ -4,8 +4,8 @@ from PIL import Image
 from PIL import ImageTk
 import tkinter as tk
 import threading
-from bonaire.gpu_segment import segment
-import bonaire.plotting_utils as utils
+from material_segmentation.gpu_segment import segment
+import material_segmentation.plotting_utils as utils
 import cv2
 
 
