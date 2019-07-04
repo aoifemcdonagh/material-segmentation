@@ -1,15 +1,29 @@
 # Material Segmentation using MINC dataset
-Set of files for testing models pretrained on MINC dataset
+This repo contains code written for a project as part of my Master's thesis. 
+The project aimed to develop a method of estimating room acoustic properties from images. 
 
-**These scripts are still under development and subject to large changes.**
+
+Image segmentation is implemented based on material classification. A GoogLeNet model pretrained on the Materials In Context Database is used to perform material classification. 
+The material segmentation map is used to estimate sound absorption in a space based on absorption coefficients of identified materials.
+
+The **material_segmentation** directory contains:
+* **Image segmentation app**
+* Script for converting a GoogLeNet model to be fully convolutional
+* Modules for performing image segmentation based on material
+
+The **ncs_demos** directory contains scripts for performing material segmentation demos using the **Intel Neural Compute Stick** (NCS). 
+These scripts were developed for live demos on a handheld device. 
+A demonstration device was constructed consisting of a Raspberry Pi, NCS, Pi camera, touchscreen and a custom printed case.
+
+![alt text](https://github.com/aoifemcdonagh/material-segmentation/src/images/demo_setup.png)
 
 ## Dependencies
 
 Dependency | Install Guide/Notes
 -----------|--------------
-CUDA | https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html 
-CuDNN | https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html
 python 3.5+ |
+CUDA | https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
+CuDNN | https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html
 caffe 1.0.0 | https://github.com/adeelz92/Install-Caffe-on-Ubuntu-16.04-Python-3 Follow steps carefully since they depend on your CUDA, CuDNN and python versions
 OpenCV | Install using pip3, not during OpenVino install.
 OpenVino | https://software.intel.com/en-us/articles/get-started-with-neural-compute-stick Note untick OpenCV
@@ -26,16 +40,16 @@ OpenVino | https://software.intel.com/en-us/articles/get-started-with-neural-com
 Script to classify material in a full image.
 Uses MINC GoogLeNet model modified to be fully convolutional
 Arguments:
-`--image` `-i` path to image to classify
-`--caffemodel` path to .caffemodel file
+   `--image` `-i` path to image to classify
+   `--caffemodel` path to .caffemodel file
 Example execution `python3 test_classification_simple.py -i image.jpg --caffemodel ../models/minc-googlenet-conv.caffemodel`
 
 ##### test_continuous_upsampling.py
 This script performs continuous segmentation with pyramidal upsampling on video/camera stream
 Arguments: 
-`--input` `-i` 'cam' or path to video file
-`--model` `-m` Path to an .xml file of a trained model (optional)
-`--padding` `-p` Number of pixels of padding to add (optional)
+   `--input` `-i` 'cam' or path to video file
+   `--model` `-m` Path to an .xml file of a trained model (optional)
+   `--padding` `-p` Number of pixels of padding to add (optional)
 Example execution `python3 test_continuous_upsampling.py -i samplevid.mp4 -p 100`
 
 ##### test_fully_conv.py
