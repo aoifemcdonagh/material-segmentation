@@ -15,7 +15,7 @@ The **ncs_demos** directory contains scripts for performing material segmentatio
 These scripts were developed for live demos on a handheld device. 
 A demonstration device was constructed consisting of a Raspberry Pi, NCS, Pi camera, touchscreen and a custom printed case.
 
-![alt text](https://github.com/aoifemcdonagh/material-segmentation/src/images/demo_setup.png)
+![alt text](https://github.com/aoifemcdonagh/material-segmentation/src/pictures/demo_setup.png)
 
 ## Dependencies
 
