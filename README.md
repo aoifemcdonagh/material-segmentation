@@ -36,12 +36,28 @@ An simple app was built to perform live image segmentation of frames from a vide
 The input stream (video or camera) plays until a user wants a (material) class map to be generated.
 An absorption coefficient map can also be generated.
 
+![alt text](https://github.com/aoifemcdonagh/material-segmentation/blob/master/src/pictures/live_image_workflow.png "start up")
+
+
 ##### runGUI_GPU.py  
 Sets up continuous segmentation of a video file or camera input. Results are displayed in a TkInter GUI  
 Arguments:  
-   `-m` `--model` Path to a .caffemodel file. If no model path specified, a model path in `gpu_segment.py` where segmentation occurs.
-   `-i` `--input` 'cam' or path to an image
+   `-m` `--model` Path to a .caffemodel file. If no model path specified, a model path in `gpu_segment.py` where segmentation occurs.  
+   `-i` `--input` 'cam' or path to an image  
+   `-p` `--padding` number of pixels of padding to add. Default is 0 
    
+Example execution:  
+`python3 runGUI_GPU.py -i cam -p 200`
+
+**GUI**  
+GUI Start  
+![alt text](https://github.com/aoifemcdonagh/material-segmentation/blob/master/src/pictures/start.png "start up")
+
+**Material Segmentation**  
+![alt text](https://github.com/aoifemcdonagh/material-segmentation/blob/master/src/pictures/demo_table_material.png "demo material segmentation")  
+
+**Sound Absorption 'Heatmap'**  
+![alt text](https://github.com/aoifemcdonagh/material-segmentation/blob/master/src/pictures/demo_table_abs.png "demo sound absorption heatmaps")  
 
 `SegmentationApp.py`  
 Contains SegmentationApp class which handles creation of GUI objects and threads for running image segmentation.
@@ -53,8 +69,7 @@ Script to classify material in a full image.
 Uses MINC GoogLeNet model modified to be fully convolutional  
 Arguments:  
    `--image` `-i` path to image to classify  
-   `--caffemodel` path to .caffemodel file  
-   
+   `--caffemodel` path to .caffemodel file   
 Example execution  
 `python3 test_classification_simple.py -i image.jpg --caffemodel ../models/minc-googlenet-conv.caffemodel`
 
