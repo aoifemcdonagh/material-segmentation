@@ -10,9 +10,10 @@ import cv2
 
 
 class SegmentationApp:
-    def __init__(self, vc, pad):
+    def __init__(self, vc, pad, model):
         self.vc = vc  # video capture
         self.padding = pad
+        self.model = model
         self.frame = None
         self.stopVideo = None  # Flag for stopping video loop
         self.colorbar_frame = None
@@ -97,7 +98,7 @@ class SegmentationApp:
             frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
 
             # image processing is done by caffe before feeding to CNN
-            results = segment(frame, pad=self.padding)
+            results = segment(frame, pad=self.padding, caffemodel=self.model)
 
             engine = utils.PlottingEngine()
             engine.set_colormap(map_type=map_type, freq=1000)  # Have colormap set by button in GUI in future

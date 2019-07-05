@@ -13,9 +13,9 @@ def build_argparser():
     parser.add_argument("-m", "--model", help="Path to an .xml file with a trained model.", type=str)
     parser.add_argument("-i", "--input", help="Input, 'cam' or path to image", required=True,
                         type=str)
-    parser.add_argument("-u", "--upsample", help="To upsample output", default=False, action="store_true")
+    #parser.add_argument("-u", "--upsample", help="To upsample output", default=False, action="store_true")
     parser.add_argument("-p", "--padding", help="Number of pixels of padding to add", type=int, default=0)
-    parser.add_argument("-r", "--resolution", help="desired camera resolution, format [h,w]", nargs="+", type=int)
+    #parser.add_argument("-r", "--resolution", help="desired camera resolution, format [h,w]", nargs="+", type=int)
     return parser
 
 
@@ -35,5 +35,5 @@ if __name__ == '__main__':
     video = cv2.VideoCapture(input_stream)
 
     # start the app
-    sa = SegmentationApp(video, args.model, args.padding)
+    sa = SegmentationApp(video, args.padding, args.model)
     sa.root.mainloop()
