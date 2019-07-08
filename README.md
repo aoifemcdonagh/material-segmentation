@@ -65,7 +65,7 @@ Example execution:
 ### SegmentationApp.py  
 Contains SegmentationApp class which handles creation of GUI objects and threads for running image segmentation.
 
-### Test Scripts 
+## Test Scripts 
 The `tests` directory contains scripts for testing various functions within this project.
 
 ## Demo Scripts
