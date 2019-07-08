@@ -1,5 +1,7 @@
 """
 Script for approximating an average absorption coefficient
+
+UNFINISHED
 """
 
 import caffe

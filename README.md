@@ -38,9 +38,10 @@ An absorption coefficient map can also be generated.
 
 ![alt text](https://github.com/aoifemcdonagh/material-segmentation/blob/master/src/pictures/live_image_workflow.png "start up")
 
-
-##### runGUI_GPU.py  
-Sets up continuous segmentation of a video file or camera input. Results are displayed in a TkInter GUI  
+### runGUI_GPU.py  
+This script runs the Segmentation App. 
+A video file or camera input is displayed until a user specifies when to perform segmentation. 
+Results are displayed by a TkInter GUI  
 Arguments:  
    `-m` `--model` Path to a .caffemodel file. If no model path specified, a model path in `gpu_segment.py` where segmentation occurs.  
    `-i` `--input` 'cam' or path to an image  
@@ -49,9 +50,11 @@ Arguments:
 Example execution:  
 `python3 runGUI_GPU.py -i cam -p 200`
 
-**GUI**  
-GUI Start  
+**GUI Start**   
 ![alt text](https://github.com/aoifemcdonagh/material-segmentation/blob/master/src/pictures/start.png "start up")
+
+**Original frame**
+![alt text](https://github.com/aoifemcdonagh/material-segmentation/blob/master/src/pictures/demo_table.png "demo original frame")  
 
 **Material Segmentation**  
 ![alt text](https://github.com/aoifemcdonagh/material-segmentation/blob/master/src/pictures/demo_table_material.png "demo material segmentation")  
@@ -59,50 +62,11 @@ GUI Start
 **Sound Absorption 'Heatmap'**  
 ![alt text](https://github.com/aoifemcdonagh/material-segmentation/blob/master/src/pictures/demo_table_abs.png "demo sound absorption heatmaps")  
 
-`SegmentationApp.py`  
+### SegmentationApp.py  
 Contains SegmentationApp class which handles creation of GUI objects and threads for running image segmentation.
 
-## Test Scripts
-
-##### test_classification_simple.py
-Script to classify material in a full image.
-Uses MINC GoogLeNet model modified to be fully convolutional  
-Arguments:  
-   `--image` `-i` path to image to classify  
-   `--caffemodel` path to .caffemodel file   
-Example execution  
-`python3 test_classification_simple.py -i image.jpg --caffemodel ../models/minc-googlenet-conv.caffemodel`
-
-##### test_continuous_upsampling.py
-This script performs continuous segmentation with pyramidal upsampling on video/camera stream  
-Arguments:  
-   `--input` `-i` 'cam' or path to video file  
-   `--model` `-m` Path to an .xml file of a trained model (optional)  
-   `--padding` `-p` Number of pixels of padding to add (optional)    
-Example execution  
-`python3 test_continuous_upsampling.py -i samplevid.mp4 -p 100`
-
-##### test_fully_conv.py
-Runs inference on a fully convolutional network with input image of arbitrary size. Image path is first argument.  
-Example execution  
-`python3 test_fully_conv.py image.jpg`
-
-##### test_gpu_segmentation.py
-Performs material segmentation on an image. Image path is first argument.
-A "pyramidal" classification and upsampling technique is used. Input image is resized at three scales (as defined in MINC paper), inference is performed on resized images, outputs are upsampled and averaged. This technique produces a much smoother, higher resolution segmentation map. This script plots the segmentation results and a confidence map.  
-Example execution  
-`python3 test_gpu_segmentation.py image.jpg`
-
-##### test_padding.py
-Verify the add_padding() and remove_padding() methods work correctly. Adds padding to an input image and plots it.  
-Example execution  
-`python3 test_padding.py image.jpg 50`
-
-##### test_upsampling.py
-Performs segmentation on a single image using th pyramidal classification & upsampling approach. Arguments are the input image path and number of pixels of padding.  
-Example execution  
-`python3 test_upsampling.py image.jpg 50`
-
+### Test Scripts 
+The `tests` directory contains scripts for testing various functions within this project.
 
 ## Demo Scripts
 The `ncs_demos` directory contains scripts to run demos using the Movidius Neural Compute Stick (NCS). Also in this directory are python files containing functions required by multiple demo scripts, e.g. `ncs_utilities.py`. The structure of these modules is not final, and subject to futher development.
