@@ -9,7 +9,7 @@ import csv
 import matplotlib.pyplot as plt
 import cv2
 
-abs_coeff_file = "abs_coefficients.csv"
+abs_coeff_file = "../abs_coefficients.csv"
 
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",
@@ -226,6 +226,12 @@ get_average_prob_maps is used in demo_camera.py to upsample on one image instead
 
 
 def get_pixel_map(class_map, colormap):
+    """
+    Function to generate a pixel map (from network output) which can be plotted by OpenCV
+    :param class_map:
+    :param colormap:
+    :return: an array of tuples to be plotted by OpenCV. The tuples define pixel values
+    """
     """
     Function to generate a pixel map (from network output) which can be plotted by OpenCV
     :param network_output: output from network (inference on GPU or NCS)

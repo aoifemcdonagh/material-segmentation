@@ -8,7 +8,7 @@ os.environ['GLOG_minloglevel'] = '2'  # Supressing caffe printouts of network in
 import caffe
 import numpy as np
 
-top_dir = os.path.dirname(os.path.realpath(__file__))
+top_dir, tail = os.path.split(os.path.dirname(os.path.realpath(__file__)))
 
 
 #  Global dictionary containing class number : name pairs

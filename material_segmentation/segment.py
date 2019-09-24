@@ -4,6 +4,7 @@
 
 import skimage
 import numpy as np
+from material_segmentation import minc_classify
 
 SCALES = [1.0 / np.sqrt(2), 1.0, np.sqrt(2)]  # Define scales as per MINC paper
 
@@ -27,7 +28,7 @@ def segment(im, pad=0):
     padded_image = add_padding(im, pad)  # Add padding to original image
     resized_images = resize_images(padded_image)  # Resize original images
 
-    outputs = [minc_utils.classify(image) for image in resized_images]  # Perform classification on images
+    outputs = [minc_classify.classify(image) for image in resized_images]  # Perform classification on images
 
     average_prob_maps = get_average_prob_maps(outputs, im.shape, pad)
 
@@ -42,7 +43,7 @@ def get_average_prob_maps(network_outputs, shape, pad=0):
     """
 
     # Get probability maps for each class for each image
-    prob_maps = [minc_utils.get_probability_maps(out) for out in network_outputs]
+    prob_maps = [minc_classify.get_probability_maps(out) for out in network_outputs]
 
     # Upsample probability maps to dimensions of original image (plus any padding)
     upsampled_prob_maps = upsample(prob_maps, output_shape=(shape[0] + pad*2, shape[1] + pad*2))
@@ -116,18 +117,23 @@ if __name__ == "__main__":
     import os
     import sys
     from datetime import datetime
-    from bonaire import minc_plotting as minc_plot, minc_classify as minc_utils
+    from material_segmentation import minc_plotting
 
     image_path = sys.argv[1]  # path to image to be segmented
 
     # Equivalent to caffe.io.load_image(image_path)
     orig_image = skimage.img_as_float(skimage.io.imread(image_path, as_grey=False)).astype(np.float32)
     padding = 0
-    results = segment(orig_image, pad=padding)
+    results = segment(orig_image, pad=padding)  # Returns average prob maps
 
     results_dir = os.path.join(os.getcwd(), "plots", ("padding_test_" + str(padding) + "_" + datetime.now().strftime('%Y-%m-%d_%H-%M-%S')))
+
+    if not os.path.isdir(os.path.join(os.getcwd(), "plots")):  # If there's no "plots" dir, make one
+        os.mkdir(os.path.join(os.getcwd(), "plots"))
+
     os.mkdir(results_dir)
 
     # minc_plot.plot_probability_maps(av_prob_maps, results)
-    minc_plot.plot_class_map(results, save=True, path=results_dir)
-    minc_plot.plot_confidence_map(results,save=True, path=results_dir)
+    minc_plotting.plot_class_map(results, save=True, path=results_dir)
+    minc_plotting.plot_confidence_map(results, save=True, path=results_dir)
+    minc_plotting.plot_abs_map(results, save=True, path=results_dir)

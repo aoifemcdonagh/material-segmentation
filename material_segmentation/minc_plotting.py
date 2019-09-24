@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import os
 from datetime import datetime
+from material_segmentation import plotting_utils
 
 #  Global dictionary containing class number : name pairs
 CLASS_LIST = {0: "brick",
@@ -187,6 +188,44 @@ def plot_probability_maps(probability_maps, path=None):
         plt.close()
         class_num += 1
 
+
+def plot_abs_map(network_output, save=False, path=None, band=1000):
+    """
+    Function for plotting absporption coefficient maps
+    :param network_output:
+    :param save:
+    :param path:
+    :param band: frequency band in Hz
+    :return:
+    """
+
+    if type(network_output) is dict:  # If the input value is an unmodified 'network output'
+        class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+    else:  # if average probability maps are passed in in case of upsampling & averaging
+        class_map = network_output.argmax(axis=0)
+
+    unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
+    class_map = modify_class_map(class_map)  # Modify class_map for plotting
+
+    engine = plotting_utils.PlottingEngine()
+    engine.set_colormap("absorption", freq=band)
+    #greyscale_map = engine.generate_grayscale_map(band=band)  # Generate greyscale map given frequency band
+    pixels, colorbar = engine.process(network_output)
+
+    fig, ax = plt.subplots(figsize=(15, 8))
+
+    ax.set_title("Absorption Coefficients at " + str(band) + " Hz")
+    hb = ax.imshow(pixels)
+
+    if save is True:  # If user chooses to save plot, do so
+        if path is None:  # If no path is specified, create one for storing probability maps
+            path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+            os.makedirs(path)
+
+        plt.savefig(path + "/abs_map.jpg")
+
+    else:  # Just show the plot
+        plt.show()
 
 def plot_output(network_output, image=None, path=None):
     """
