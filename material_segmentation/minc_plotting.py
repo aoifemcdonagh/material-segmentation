@@ -227,7 +227,7 @@ def plot_abs_map(network_output, save=False, path=None, band=1000):
     else:  # Just show the plot
         plt.show()
 
-def plot_output(network_output, image=None, path=None):
+def plot_output(network_output, image=None, path=None, aspect=None):
     """
     Function for plotting and saving the output of classification model
         - Class map
@@ -237,6 +237,7 @@ def plot_output(network_output, image=None, path=None):
     :param network_output: raw output from classification model
     :param image: pre-loaded image to plot alongside classmap
     :param path: path to save plots to
+    :param aspect: aspect of output figures
     :return:
     """
 
@@ -247,14 +248,36 @@ def plot_output(network_output, image=None, path=None):
         path = os.path.join(path, "plots")
         os.makedirs(path)
 
-    class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
-    prob_map = network_output['prob'][0].max(axis=0)
+    log = open((path + "/test_log.txt"), "w+")  # Open log file
+
+    log.write("path: " + path + "\n")
+
+    if type(network_output) is dict:  # If the input value is an unmodified 'network output'
+        class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+        prob_map = network_output['prob'][0].max(axis=0)
+
+        # Convert network_output to format which can be used to plot probability maps
+        network_output = [network_output['prob'][0][class_num] for class_num in CLASS_LIST.keys()]
+
+        log.write("network_output is dict" + "\n")
+
+    else:  # if average probability maps are passed in in case of upsampling & averaging
+        class_map = network_output.argmax(axis=0)
+        prob_map = network_output.max(axis=0)
+
+        log.write("\'network_output\' is average prob maps" + "\n")
+
+    if aspect is None:
+        aspect = (30, 10)
+
+    log.write("plot aspect: " + str(aspect) + "\n")
+    log.write("image aspect: " + str(image.shape[1]) + ", " + str(image.shape[0]) + "\n")
+
     unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
     class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
     ## Plot image and class map ##
-    fig, axs = plt.subplots(ncols=2, figsize=(30,10))
-    fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
+    fig, axs = plt.subplots(ncols=2, figsize=aspect)
     ax = axs[0]
     hb = ax.imshow(image)
     ax.set_title("Input image")
@@ -275,8 +298,7 @@ def plot_output(network_output, image=None, path=None):
     plt.close()
 
     ## Plot image and confidence map (i.e. highest prob at each location, irrespective of class) ##
-    fig, axs = plt.subplots(ncols=2, figsize=(30,10))
-    fig.subplots_adjust(hspace=0.5, left=0.07, right=0.93)
+    fig, axs = plt.subplots(ncols=2, figsize=aspect)
     ax = axs[0]
     hb = ax.imshow(image)
     ax.set_title("Input image")
@@ -292,7 +314,7 @@ def plot_output(network_output, image=None, path=None):
 
     # Plot probability maps for all classes
     for class_num in CLASS_LIST.keys():
-        prob_map = network_output['prob'][0][class_num]
+        prob_map = network_output[class_num]
 
         fig, ax = plt.subplots()
         hb = ax.imshow(prob_map, cmap='gray')
@@ -302,6 +324,8 @@ def plot_output(network_output, image=None, path=None):
 
         plt.savefig(path + "/" + str(class_num) + ".jpg")
         plt.close()
+
+    log.close()  # close log file
 
 
 def get_class_plot(network_output):
