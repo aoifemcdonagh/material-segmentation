@@ -10,7 +10,7 @@ import cv2
 
 def build_argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--model", help="Path to an .xml file with a trained model.", type=str)
+    parser.add_argument("-m", "--model", help="Path to a .caffemodel file with a trained model.", type=str)
     parser.add_argument("-i", "--input", help="Input, 'cam' or path to image", required=True,
                         type=str)
     #parser.add_argument("-u", "--upsample", help="To upsample output", default=False, action="store_true")

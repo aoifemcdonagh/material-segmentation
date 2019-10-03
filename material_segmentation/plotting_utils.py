@@ -218,13 +218,6 @@ class PlottingEngine:
         return tick_labels
 
 
-"""
-Following functions are used by NCS demo scripts
-
-get_average_prob_maps is used in demo_camera.py to upsample on one image instead of 3
-"""
-
-
 def get_pixel_map(class_map, colormap):
     """
     Function to generate a pixel map (from network output) which can be plotted by OpenCV
@@ -244,13 +237,15 @@ def get_pixel_map(class_map, colormap):
 
 def get_average_prob_maps(network_outputs, shape, pad=0):
     """
+    used in demo_camera.py and NCS_SegmentationApp.py to upsample on one image instead of 3
     :param network_outputs: List of outputs
     :param shape: shape of original image needed for upsampling
     :return: Probability maps for each class, averaged from resized images probability maps
     """
     log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.INFO, stream=sys.stdout)  # Configure logging
     # Get probability maps for each class for each image
-    prob_maps = [get_probability_maps(out) for out in network_outputs]
+    #prob_maps = [get_probability_maps(out) for out in network_outputs]
+    prob_maps = get_probability_maps(network_outputs)
 
     upsample_start = time.time()
     # Upsample probability maps to dimensions of original image (plus any padding)
@@ -331,3 +326,53 @@ def remove_padding(im, pad=0):
         return im
     else:
         return im[pad:-pad, pad:-pad]
+
+
+"""
+Following functions are used by NCS demo scripts
+It was easier to put these functions in this script so that fewer imports were required
+by NCS_SegmentationApp.py
+Importing other scripts would introduce new dependencies, some of which were not available
+on the Pi.
+
+get_average_prob_maps is used in demo_camera.py to upsample on one image instead of 3
+"""
+
+def get_average_prob_maps_single_image(network_output, shape, pad=0):
+    """
+    used in demo_camera.py and NCS_SegmentationApp.py to upsample on one image instead of 3
+    :param network_outputs: List of outputs
+    :param shape: shape of original image needed for upsampling
+    :return: Probability maps for each class, averaged from resized images probability maps
+    """
+    log.basicConfig(format="[ %(levelname)s ] %(message)s", level=log.INFO, stream=sys.stdout)  # Configure logging
+    # Get probability maps for each class for each image
+    prob_maps = get_probability_maps(network_output)
+
+    upsample_start = time.time()
+    # Upsample probability maps to dimensions of original image (plus any padding)
+    upsampled_prob_maps = upsample_single_image(prob_maps, output_shape=(shape[0] + pad*2, shape[1] + pad*2))
+    log.info("Upsampling operation time: {:.3f} ms".format((time.time() - upsample_start) * 1000))
+
+    # Remove the padded sections from the averaged prob maps
+    averaged_prob_maps = np.array([remove_padding(prob_map, pad) for prob_map in upsampled_prob_maps])
+
+    return averaged_prob_maps
+
+
+def upsample_single_image(prob_maps, output_shape):
+    """
+    Function for performing upsamping of probability maps
+    :param prob_maps: Probability maps for each class for each resized image
+    :param output_shape: Desired shape to upsample to (should be dimensions of original image)
+    :return:
+    """
+
+    # Upsampling probability maps to be same dimensions as original image
+    # np.array so that they can be averaged later
+    return np.array([skimage.transform.resize(prob_map,
+                                               output_shape=output_shape,
+                                               mode='constant',
+                                               cval=0,
+                                               preserve_range=True)
+                      for prob_map in prob_maps])

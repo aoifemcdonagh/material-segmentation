@@ -1,4 +1,4 @@
-# Script to test GPU segmentation via pyramidal method.
+# Script to test GPU segmentation with pyramidal method.
 import sys
 import numpy as np
 from material_segmentation import minc_plotting as minc_plot

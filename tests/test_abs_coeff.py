@@ -7,8 +7,10 @@ UNFINISHED
 import caffe
 import sys
 import csv
+import os
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
 # Define absorption coefficients for each material
 
@@ -37,6 +39,57 @@ CLASS_LIST = {0: "brick",
               22: "wood"}
 
 abs_coeff_file = "../abs_coefficients.csv"
+
+def plot_abs_map(network_output, save=False, path=None, band=1000):
+    """
+    Function for plotting absporption coefficient maps
+    :param network_output:
+    :param save:
+    :param path:
+    :param band: frequency band in Hz
+    :return:
+    """
+
+    if type(network_output) is dict:  # If the input value is an unmodified 'network output'
+        class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
+    else:  # if average probability maps are passed in in case of upsampling & averaging
+        class_map = network_output.argmax(axis=0)
+
+    pixels = np.array([[colormap[class_num] for class_num in row] for row in class_map], dtype=np.uint8)
+
+    fig, ax = plt.subplots(figsize=(15, 8))
+
+    ax.set_title("Absorption Coefficients at " + str(band) + " Hz")
+    hb = ax.imshow(pixels)
+
+    if save is True:  # If user chooses to save plot, do so
+        if path is None:  # If no path is specified, create one for storing probability maps
+            path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+            os.makedirs(path)
+
+        plt.savefig(path + "/abs_map.jpg")
+
+    else:  # Just show the plot
+        plt.show()
+
+
+def get_pixel_map(class_map, colormap):
+    """
+    Function to generate a pixel map (from network output) which can be plotted by OpenCV
+    :param class_map:
+    :param colormap:
+    :return: an array of tuples to be plotted by OpenCV. The tuples define pixel values
+    """
+    """
+    Function to generate a pixel map (from network output) which can be plotted by OpenCV
+    :param network_output: output from network (inference on GPU or NCS)
+    :return: an array of tuples to be plotted by OpenCV. The tuples define pixel values
+    """
+
+    # Convert to format suitable for plotting with OpenCV, i.e. array of pixels
+    pixel_map = np.array([[colormap[class_num] for class_num in row] for row in class_map], dtype=np.uint8)
+    return pixel_map
+
 
 def get_coefficients(band, file_path=abs_coeff_file):
     """
@@ -99,6 +152,8 @@ def get_grayscale(c):
 if __name__ == "__main__":
     coeffs = get_coefficients(1000)
     get_color_map()
+
+
 
 
 

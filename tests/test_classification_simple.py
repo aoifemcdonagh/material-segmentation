@@ -8,7 +8,7 @@ Optional inputs:
 """
 
 import argparse
-from material_segmentation import minc_plotting as minc_plot
+from material_segmentation import minc_plotting
 import caffe
 from material_segmentation.gpu_segment import classify
 
@@ -23,5 +23,5 @@ args = parser.parse_args()
 image = caffe.io.load_image(args.image)  # must load image using caffe.io.load_image(). note this outputs RGB image
 output = classify(image, caffemodel=args.caffemodel)
 
-minc_plot.plot_class_map(output)
-minc_plot.plot_confidence_map(output)
+minc_plotting.plot_class_map(output)
+minc_plotting.plot_confidence_map(output)

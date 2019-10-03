@@ -35,5 +35,5 @@ if __name__ == '__main__':
     video = cv2.VideoCapture(input_stream)
 
     # start the app
-    sa = SegmentationApp(video, args.padding, args.model)
+    sa = SegmentationApp(video, args.model, args.padding)
     sa.root.mainloop()

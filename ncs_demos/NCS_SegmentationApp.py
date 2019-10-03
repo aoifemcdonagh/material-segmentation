@@ -126,7 +126,7 @@ class SegmentationApp:
 
             # Parse detection results of the current request
             results = self.exec_net.requests[0].outputs
-            results = utils.get_average_prob_maps(results, [self.resolution[0], self.resolution[1]])
+            results = utils.get_average_prob_maps_single_image(results, [self.resolution[0], self.resolution[1]])
 
             engine = utils.PlottingEngine()
             engine.set_colormap(map_type=map_type, freq=1000)  # Have colormap set by button in GUI in future

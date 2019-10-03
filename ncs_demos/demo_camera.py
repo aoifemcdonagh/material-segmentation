@@ -92,6 +92,7 @@ if __name__ == "__main__":
             next_frame = utils.add_padding(next_frame, args.padding)
         else:
             ret, frame = cap.read()
+            plot_frame = cv2.resize(frame, (h, w))
             frame = utils.add_padding(frame, args.padding)
         if not ret:
             break
@@ -139,6 +140,7 @@ if __name__ == "__main__":
 
             #class_map = cv2.applyColorMap(class_map, cv2.COLORMAP_WINTER)
             cv2.imshow('class map', class_map)
+            cv2.imshow('frame', plot_frame)
 
         if is_async_mode:
             cur_request_id, next_request_id = next_request_id, cur_request_id
