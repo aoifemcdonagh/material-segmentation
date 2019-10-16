@@ -83,12 +83,14 @@ def modify_class_map(class_map):
     return modified_class_map
 
 
-def plot_confidence_map(network_output, save=False, path=None):
+def plot_confidence_map(network_output, save=False, path=None, image=None, aspect=(15, 8)):
     """
     Function for plotting the confidence map from classified image
     :param network_output:
     :param save:
     :param path:
+    :param image:
+    :param aspect
     :return:
     """
 
@@ -97,9 +99,19 @@ def plot_confidence_map(network_output, save=False, path=None):
     else:  # if average probability maps are passed in in case of upsampling & averaging
         confidence_map = network_output.max(axis=0)
 
-    fig, ax = plt.subplots(figsize=(15,8))
+    if image is None:
+        fig, axs = plt.subplots()
+        axs = [axs]
 
-    ax.set_title("highest probability at each location (irrespective of class)")
+    else:  # i.e. if there is an image to plot
+        fig, axs = plt.subplots(ncols=2, figsize=aspect)
+
+        ax = axs[1]
+        ax.imshow(image)
+        ax.set_title("Input image")
+
+    ax = axs[0]
+    ax.set_title("highest probability at each location")
     hb = ax.imshow(confidence_map)
     cb = fig.colorbar(hb, ax=ax)
     cb.set_label('Probability')
@@ -115,12 +127,14 @@ def plot_confidence_map(network_output, save=False, path=None):
         plt.show()
 
 
-def plot_class_map(network_output, save=False, path=None):
+def plot_class_map(network_output, save=False, path=None, image=None, aspect=(15, 8)):
     """
     Function for plotting only the class map from classification output
     :param network_output:
     :param save:
     :param path:
+    :param image:
+    :param aspect
     :return:
     """
 
@@ -132,9 +146,18 @@ def plot_class_map(network_output, save=False, path=None):
     unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
     class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
+    if image is None:
+        fig, axs = plt.subplots()
+        axs = [axs]
 
-    fig, ax = plt.subplots(figsize=(15,8))
+    else:  # i.e. if there is an image to plot
+        fig, axs = plt.subplots(ncols=2, figsize=aspect)
 
+        ax = axs[1]
+        ax.imshow(image)
+        ax.set_title("Input image")
+
+    ax = axs[0]
     ax.set_title("Class at each location")
     hb = ax.imshow(class_map, cmap=plt.get_cmap("gist_rainbow", len(unique_classes)))
 
@@ -142,10 +165,9 @@ def plot_class_map(network_output, save=False, path=None):
         len(unique_classes))  # Define the step length between ticks for colorbar.
     loc = np.arange(step_length / 2, len(unique_classes), step_length) if len(unique_classes) > 1 else [
         0.0]  # Shift each tick location so that the label is in the middle
-    cb = fig.colorbar(hb, ticks=loc)
+    cb = fig.colorbar(hb, ax=ax, ticks=loc)
     cb.set_ticklabels(get_tick_labels(unique_classes))
     cb.set_label('Class Numbers')
-
 
     if save is True:  # If user chooses to save plot, do so
         if path is None:  # If no path is specified, create one for storing probability maps
@@ -158,25 +180,27 @@ def plot_class_map(network_output, save=False, path=None):
         plt.show()
 
 
-def plot_probability_maps(probability_maps, path=None):
+def plot_probability_maps(network_output, path=None):
     """
     Function for plotting probability maps
-    Inputs:
-        - probability_maps: probability maps for all classes
-        - path: optional path to save plots to. Default is in folder 'plots' in current directory
-
-    This function is called from outside this script
+    :param network_output:
+    :param path: optional path to save plots to. Default is in folder 'plots' in current directory
+    :return:
     """
 
     if path is None:  # If no path is specified, create one for storing probability maps
         path = os.path.join(os.getcwd(), "plots", datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
         os.makedirs(path)
-    else:
-        path = os.path.join(path, "plots")
-        os.makedirs(path)
 
-    class_num = 0  # start at class 0
-    for prob_map in probability_maps:
+    if type(network_output) is dict:  # If the input value is an unmodified 'network output'
+        # Convert network_output to format which can be used to plot probability maps
+        probability_maps = [network_output['prob'][0][class_num] for class_num in CLASS_LIST.keys()]
+
+    else:  # if average probability maps are passed in in case of upsampling & averaging
+        probability_maps = network_output
+
+    for class_num in CLASS_LIST.keys():
+        prob_map = probability_maps[class_num]
 
         fig, ax = plt.subplots()
         hb = ax.imshow(prob_map, cmap='gray')
@@ -189,13 +213,14 @@ def plot_probability_maps(probability_maps, path=None):
         class_num += 1
 
 
-def plot_abs_map(network_output, save=False, path=None, band=1000):
+def plot_abs_map(network_output, image=None, save=False, path=None, band=1000, aspect=(15,8)):
     """
     Function for plotting absporption coefficient maps
     :param network_output:
     :param save:
     :param path:
     :param band: frequency band in Hz
+    :param aspect
     :return:
     """
 
@@ -205,17 +230,31 @@ def plot_abs_map(network_output, save=False, path=None, band=1000):
         class_map = network_output.argmax(axis=0)
 
     unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
-    class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
     engine = plotting_utils.PlottingEngine()
     engine.set_colormap("absorption", freq=band)
-    #greyscale_map = engine.generate_grayscale_map(band=band)  # Generate greyscale map given frequency band
-    pixels, colorbar = engine.process(network_output)
+    pixels, _, colorbar_pixels = engine.process(network_output)  # Ignore colorbar plot, used by SegmentationApp GUI
 
-    fig, ax = plt.subplots(figsize=(15, 8))
+    if image is None:
+        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=aspect)
 
+    else:
+        fig, axs = plt.subplots(nrows=1, ncols=3, figsize=aspect)
+
+        ax = axs[2]
+        ax.set_title("Input image")
+        ax.imshow(image)
+
+    ax = axs[0]
     ax.set_title("Absorption Coefficients at " + str(band) + " Hz")
-    hb = ax.imshow(pixels)
+    ax.imshow(pixels)
+
+    ax = axs[1]
+    ax.imshow(colorbar_pixels)
+    labels = engine.get_tick_labels(unique_classes)
+    ax.set_yticks(np.arange(0, len(unique_classes)))
+    ax.set_yticklabels(labels)
+    ax.get_xaxis().set_visible(False)
 
     if save is True:  # If user chooses to save plot, do so
         if path is None:  # If no path is specified, create one for storing probability maps
@@ -227,17 +266,20 @@ def plot_abs_map(network_output, save=False, path=None, band=1000):
     else:  # Just show the plot
         plt.show()
 
-def plot_output(network_output, image=None, path=None, aspect=None):
+
+def plot_output(network_output, image=None, path=None, aspect=(30, 10), band=1000):
     """
     Function for plotting and saving the output of classification model
         - Class map
         - Confidence map
+        - Absorption map
         - All probability maps
 
     :param network_output: raw output from classification model
     :param image: pre-loaded image to plot alongside classmap
     :param path: path to save plots to
     :param aspect: aspect of output figures
+    :param band: frequency band to use for absorption map plot
     :return:
     """
 
@@ -252,79 +294,24 @@ def plot_output(network_output, image=None, path=None, aspect=None):
 
     log.write("path: " + path + "\n")
 
-    if type(network_output) is dict:  # If the input value is an unmodified 'network output'
-        class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
-        prob_map = network_output['prob'][0].max(axis=0)
-
-        # Convert network_output to format which can be used to plot probability maps
-        network_output = [network_output['prob'][0][class_num] for class_num in CLASS_LIST.keys()]
-
-        log.write("network_output is dict" + "\n")
-
-    else:  # if average probability maps are passed in in case of upsampling & averaging
-        class_map = network_output.argmax(axis=0)
-        prob_map = network_output.max(axis=0)
-
-        log.write("\'network_output\' is average prob maps" + "\n")
-
-    if aspect is None:
-        aspect = (30, 10)
-
     log.write("plot aspect: " + str(aspect) + "\n")
-    log.write("image aspect: " + str(image.shape[1]) + ", " + str(image.shape[0]) + "\n")
 
-    unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
-    class_map = modify_class_map(class_map)  # Modify class_map for plotting
+    if image is not None:
+        log.write("image aspect: " + str(image.shape[1]) + ", " + str(image.shape[0]) + "\n")
 
-    ## Plot image and class map ##
-    fig, axs = plt.subplots(ncols=2, figsize=aspect)
-    ax = axs[0]
-    hb = ax.imshow(image)
-    ax.set_title("Input image")
+    #  Plot class map
+    plot_class_map(network_output, save=True, path=path, image=image, aspect=aspect)
 
-    ax = axs[1]
-    ax.set_title("Class at each location")
-    hb = ax.imshow(class_map, cmap=plt.get_cmap("gist_rainbow", len(unique_classes)))
+    #  Plot confidence map
+    plot_confidence_map(network_output, save=True, path=path, image=image, aspect=aspect)
 
-    step_length = float(len(unique_classes) - 1) / float(
-        len(unique_classes))  # Define the step length between ticks for colorbar.
-    loc = np.arange(step_length / 2, len(unique_classes), step_length) if len(unique_classes) > 1 else [
-        0.0]  # Shift each tick location so that the label is in the middle
-    cb = fig.colorbar(hb, ticks=loc)
-    cb.set_ticklabels(get_tick_labels(unique_classes))
-    cb.set_label('Class Numbers')
-
-    plt.savefig(path + "/class_map.jpg")
-    plt.close()
-
-    ## Plot image and confidence map (i.e. highest prob at each location, irrespective of class) ##
-    fig, axs = plt.subplots(ncols=2, figsize=aspect)
-    ax = axs[0]
-    hb = ax.imshow(image)
-    ax.set_title("Input image")
-
-    ax = axs[1]
-    hb = ax.imshow(prob_map)
-    ax.set_title("highest probability at each location (irrespective of class)")
-    cb = fig.colorbar(hb, ax=ax)
-    cb.set_label('Probability')
-
-    plt.savefig(path + "/confidence_map.jpg")
-    plt.close()
+    #  Plot absorption map
+    plot_abs_map(network_output, image=image, save=True, path=path, band=band, aspect=aspect)
 
     # Plot probability maps for all classes
-    for class_num in CLASS_LIST.keys():
-        prob_map = network_output[class_num]
+    plot_probability_maps(network_output, path=path)
 
-        fig, ax = plt.subplots()
-        hb = ax.imshow(prob_map, cmap='gray')
-        ax.set_title("Probability of class " + CLASS_LIST.get(class_num))
-        cb = fig.colorbar(hb, ax=ax)
-        cb.set_label('Probability')
-
-        plt.savefig(path + "/" + str(class_num) + ".jpg")
-        plt.close()
-
+    # Close log file
     log.close()  # close log file
 
 

@@ -64,18 +64,36 @@ class PlottingEngine:
 
         colorbar = self.create_colorbar(class_map)
 
-        return pixel_map, colorbar
+        colorbar_pixels = self.get_colorbar_pixel_map(class_map)
+
+        return pixel_map, colorbar, colorbar_pixels
 
     def get_pixel_map(self, class_map):
         """
         Function to generate a pixel map (from network output) which can be plotted by OpenCV
-        :param network_output: output from network (inference on GPU or NCS)
+        :param class_map: class map generated from an inference pass (network output)
         :return: an array of tuples to be plotted by OpenCV. The tuples define pixel values
         """
 
         # Convert to format suitable for plotting with OpenCV, i.e. array of pixels
         pixel_map = np.array([[self.colormap[class_num] for class_num in row] for row in class_map], dtype=np.uint8)
         return pixel_map
+
+    def get_colorbar_pixel_map(self, class_map):
+        """
+        Create a dummy color bar.
+        The output of this function is returned by self.process()
+        Implemented function for generating plots outside of the SegmentationApp GUI
+        :param class_map:
+        :return: Array of tuples defining pixel values
+        """
+
+        #  Create a dummy array to convert to a color bar
+        unique_values = np.unique(class_map)  # array of unique values in class_map
+        b = np.ones([len(unique_values), 4])
+        bar = (b * unique_values[:, np.newaxis]).astype(int)
+
+        return self.get_pixel_map(bar)
 
     def set_colormap(self, map_type, freq=None):
         """

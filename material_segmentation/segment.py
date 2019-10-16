@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     # Equivalent to caffe.io.load_image(image_path)
     orig_image = skimage.img_as_float(skimage.io.imread(image_path, as_grey=False)).astype(np.float32)
-    padding = 0
+    padding = 50
     results = segment(orig_image, pad=padding)  # Returns average prob maps
 
     results_dir = os.path.join(os.getcwd(), "plots", ("padding_test_" + str(padding) + "_" + datetime.now().strftime('%Y-%m-%d_%H-%M-%S')))
