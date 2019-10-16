@@ -83,14 +83,27 @@ def modify_class_map(class_map):
     return modified_class_map
 
 
-def plot_confidence_map(network_output, save=False, path=None, image=None, aspect=(15, 8)):
+def get_aspect(image, base_scale=15):
+    """
+    Generate suitable plot resolution based on image or network output dimensions
+    :param image: any 2+ dimensional shape
+    :param base_scale: base scale to generate image aspect
+    :return: aspect ratio for plots
+    """
+
+    ratio = float(image.shape[0])/float(image.shape[1])  # W:H ratio for image
+    aspect = (base_scale, round(base_scale*ratio))  # W:H for matplotlib plot
+
+    return aspect
+
+
+def plot_confidence_map(network_output, save=False, path=None, image=None):
     """
     Function for plotting the confidence map from classified image
     :param network_output:
     :param save:
     :param path:
     :param image:
-    :param aspect
     :return:
     """
 
@@ -99,11 +112,14 @@ def plot_confidence_map(network_output, save=False, path=None, image=None, aspec
     else:  # if average probability maps are passed in in case of upsampling & averaging
         confidence_map = network_output.max(axis=0)
 
+    aspect = get_aspect(confidence_map)
+
     if image is None:
-        fig, axs = plt.subplots()
+        fig, axs = plt.subplots(figsize=aspect)
         axs = [axs]
 
     else:  # i.e. if there is an image to plot
+        aspect = (aspect[0]*2, aspect[1])  # Increase width of aspect if there is an image to plot
         fig, axs = plt.subplots(ncols=2, figsize=aspect)
 
         ax = axs[1]
@@ -127,14 +143,13 @@ def plot_confidence_map(network_output, save=False, path=None, image=None, aspec
         plt.show()
 
 
-def plot_class_map(network_output, save=False, path=None, image=None, aspect=(15, 8)):
+def plot_class_map(network_output, save=False, path=None, image=None):
     """
     Function for plotting only the class map from classification output
     :param network_output:
     :param save:
     :param path:
     :param image:
-    :param aspect
     :return:
     """
 
@@ -143,14 +158,17 @@ def plot_class_map(network_output, save=False, path=None, image=None, aspect=(15
     else:  # if average probability maps are passed in in case of upsampling & averaging
         class_map = network_output.argmax(axis=0)
 
+    aspect = get_aspect(class_map)
+
     unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
     class_map = modify_class_map(class_map)  # Modify class_map for plotting
 
     if image is None:
-        fig, axs = plt.subplots()
+        fig, axs = plt.subplots(figsize=aspect)
         axs = [axs]
 
     else:  # i.e. if there is an image to plot
+        aspect = (aspect[0] * 2, aspect[1])  # Increase width of aspect if there is an image to plot
         fig, axs = plt.subplots(ncols=2, figsize=aspect)
 
         ax = axs[1]
@@ -199,10 +217,12 @@ def plot_probability_maps(network_output, path=None):
     else:  # if average probability maps are passed in in case of upsampling & averaging
         probability_maps = network_output
 
+    aspect = get_aspect(probability_maps[0])
+
     for class_num in CLASS_LIST.keys():
         prob_map = probability_maps[class_num]
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=aspect)
         hb = ax.imshow(prob_map, cmap='gray')
         ax.set_title("Probability of class " + CLASS_LIST.get(class_num))
         cb = fig.colorbar(hb, ax=ax)
@@ -219,8 +239,8 @@ def plot_abs_map(network_output, image=None, save=False, path=None, band=1000, a
     :param network_output:
     :param save:
     :param path:
+    :param image:
     :param band: frequency band in Hz
-    :param aspect
     :return:
     """
 
@@ -228,6 +248,8 @@ def plot_abs_map(network_output, image=None, save=False, path=None, band=1000, a
         class_map = network_output['prob'][0].argmax(axis=0)  # Get highest probability class at each location
     else:  # if average probability maps are passed in in case of upsampling & averaging
         class_map = network_output.argmax(axis=0)
+
+    aspect = get_aspect(class_map)
 
     unique_classes = np.unique(class_map).tolist()  # Get unique classes for plot
 
@@ -239,6 +261,7 @@ def plot_abs_map(network_output, image=None, save=False, path=None, band=1000, a
         fig, axs = plt.subplots(nrows=1, ncols=2, figsize=aspect)
 
     else:
+        aspect = (aspect[0] * 2, aspect[1])  # Increase width of aspect if there is an image to plot
         fig, axs = plt.subplots(nrows=1, ncols=3, figsize=aspect)
 
         ax = axs[2]
@@ -267,7 +290,7 @@ def plot_abs_map(network_output, image=None, save=False, path=None, band=1000, a
         plt.show()
 
 
-def plot_output(network_output, image=None, path=None, aspect=(30, 10), band=1000):
+def plot_output(network_output, image=None, path=None, band=1000):
     """
     Function for plotting and saving the output of classification model
         - Class map
@@ -294,19 +317,17 @@ def plot_output(network_output, image=None, path=None, aspect=(30, 10), band=100
 
     log.write("path: " + path + "\n")
 
-    log.write("plot aspect: " + str(aspect) + "\n")
-
     if image is not None:
         log.write("image aspect: " + str(image.shape[1]) + ", " + str(image.shape[0]) + "\n")
 
     #  Plot class map
-    plot_class_map(network_output, save=True, path=path, image=image, aspect=aspect)
+    plot_class_map(network_output, save=True, path=path, image=image)
 
     #  Plot confidence map
-    plot_confidence_map(network_output, save=True, path=path, image=image, aspect=aspect)
+    plot_confidence_map(network_output, save=True, path=path, image=image)
 
     #  Plot absorption map
-    plot_abs_map(network_output, image=image, save=True, path=path, band=band, aspect=aspect)
+    plot_abs_map(network_output, image=image, save=True, path=path, band=band)
 
     # Plot probability maps for all classes
     plot_probability_maps(network_output, path=path)

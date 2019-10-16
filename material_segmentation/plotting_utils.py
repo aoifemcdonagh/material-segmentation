@@ -90,7 +90,7 @@ class PlottingEngine:
 
         #  Create a dummy array to convert to a color bar
         unique_values = np.unique(class_map)  # array of unique values in class_map
-        b = np.ones([len(unique_values), 4])
+        b = np.ones([len(unique_values), 1])
         bar = (b * unique_values[:, np.newaxis]).astype(int)
 
         return self.get_pixel_map(bar)
