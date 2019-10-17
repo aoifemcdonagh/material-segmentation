@@ -103,7 +103,7 @@ class SegmentationApp:
             engine = utils.PlottingEngine()
             engine.set_colormap(map_type=map_type, freq=1000)  # Have colormap set by button in GUI in future
 
-            pixels, colorbar = engine.process(results)
+            pixels, colorbar, _ = engine.process(results)
 
             image = Image.fromarray(pixels)
             image = ImageTk.PhotoImage(image)

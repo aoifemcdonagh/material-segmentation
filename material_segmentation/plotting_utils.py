@@ -90,9 +90,10 @@ class PlottingEngine:
 
         #  Create a dummy array to convert to a color bar
         unique_values = np.unique(class_map)  # array of unique values in class_map
+        unique_values = unique_values[::-1]  # Reverse order so that labels will match
         b = np.ones([len(unique_values), 1])
         bar = (b * unique_values[:, np.newaxis]).astype(int)
-
+        bar = np.flipud(bar)  # Reverse order so that labels will match
         return self.get_pixel_map(bar)
 
     def set_colormap(self, map_type, freq=None):
@@ -184,6 +185,7 @@ class PlottingEngine:
 
         #unique_values = np.arange(0,23)
         unique_values = np.unique(class_map)  # array of unique values in class_map
+        #unique_values = unique_values[::-1]  # reverse order of classes so that labels will match
         b = np.ones([len(unique_values), 4])
         bar = (b * unique_values[:, np.newaxis]).astype(int)
 
@@ -224,17 +226,44 @@ class PlottingEngine:
     def get_tick_labels(self, class_numbers):
         """
         Function generating tick labels appropriate to each classified image
+        :param class_numbers: list of class numbers which appear in a plot
+        :return: list of class names and list of absorption coeffs matching classes
+        """
+
+        class_names = []
+        for number in class_numbers:
+            class_names.append(CLASS_LIST.get(number))
+
+        return class_names
+
+    def get_abs_labels(self, class_numbers, band=1000):
+        """
+
+        :param class_numbers:
+        :param band:
+        :return:
         """
         class_names = []
         for number in class_numbers:
             class_names.append(CLASS_LIST.get(number))
 
-        tick_labels = []
-        for (number, name) in zip(class_numbers, class_names):
-            tick_labels.append(str(number) + ": " + name)
+        # Get absorption coefficient labels
+        with open(abs_coeff_file) as csvfile:
+            read_csv = csv.reader(csvfile, delimiter=',')
+            headers = next(read_csv, None)  # Get headers in csv file
 
-        return tick_labels
+            if str(band) not in headers:
+                print("Invalid frequency band")
+                return
+            else:
+                index = headers.index(str(band))
 
+            abs_labels = []
+            for row in read_csv:
+                if row[0] in class_names:
+                    abs_labels.append(row[0] + ": " + str(row[index]))  # Get abs coeff for each material at given freq band as float
+
+        return abs_labels
 
 def get_pixel_map(class_map, colormap):
     """

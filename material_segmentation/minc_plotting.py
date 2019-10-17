@@ -57,8 +57,8 @@ def get_tick_labels(class_numbers):
     """
     class_names = get_class_names(class_numbers)
     tick_labels = []
-    for (number, name) in zip(class_numbers, class_names):
-        tick_labels.append(str(number) + ": " + name)
+    for name in class_names:
+        tick_labels.append(name)
 
     return tick_labels
 
@@ -83,7 +83,7 @@ def modify_class_map(class_map):
     return modified_class_map
 
 
-def get_aspect(image, base_scale=15):
+def get_aspect(image, base_scale=10):
     """
     Generate suitable plot resolution based on image or network output dimensions
     :param image: any 2+ dimensional shape
@@ -185,7 +185,7 @@ def plot_class_map(network_output, save=False, path=None, image=None):
         0.0]  # Shift each tick location so that the label is in the middle
     cb = fig.colorbar(hb, ax=ax, ticks=loc)
     cb.set_ticklabels(get_tick_labels(unique_classes))
-    cb.set_label('Class Numbers')
+    cb.set_label('Classes')
 
     if save is True:  # If user chooses to save plot, do so
         if path is None:  # If no path is specified, create one for storing probability maps
@@ -233,7 +233,7 @@ def plot_probability_maps(network_output, path=None):
         class_num += 1
 
 
-def plot_abs_map(network_output, image=None, save=False, path=None, band=1000, aspect=(15,8)):
+def plot_abs_map(network_output, image=None, save=False, path=None, band=1000):
     """
     Function for plotting absporption coefficient maps
     :param network_output:
@@ -258,15 +258,16 @@ def plot_abs_map(network_output, image=None, save=False, path=None, band=1000, a
     pixels, _, colorbar_pixels = engine.process(network_output)  # Ignore colorbar plot, used by SegmentationApp GUI
 
     if image is None:
+        aspect = (aspect[0] * 2, aspect[1])  # Increase width of aspect
         fig, axs = plt.subplots(nrows=1, ncols=2, figsize=aspect)
 
     else:
-        aspect = (aspect[0] * 2, aspect[1])  # Increase width of aspect if there is an image to plot
+        aspect = (aspect[0] * 3, aspect[1])  # Increase width of aspect if there is an image to plot
         fig, axs = plt.subplots(nrows=1, ncols=3, figsize=aspect)
 
         ax = axs[2]
         ax.set_title("Input image")
-        ax.imshow(image)
+        ax.imshow(image, aspect="auto")
 
     ax = axs[0]
     ax.set_title("Absorption Coefficients at " + str(band) + " Hz")
@@ -274,10 +275,10 @@ def plot_abs_map(network_output, image=None, save=False, path=None, band=1000, a
 
     ax = axs[1]
     ax.imshow(colorbar_pixels)
-    labels = engine.get_tick_labels(unique_classes)
+    ax.get_xaxis().set_visible(False)  # remove x axis ticks
+    abs_labels = engine.get_abs_labels(unique_classes)  # Get tick labels from plotting engine
     ax.set_yticks(np.arange(0, len(unique_classes)))
-    ax.set_yticklabels(labels)
-    ax.get_xaxis().set_visible(False)
+    ax.set_yticklabels(abs_labels)
 
     if save is True:  # If user chooses to save plot, do so
         if path is None:  # If no path is specified, create one for storing probability maps

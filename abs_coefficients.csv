@@ -5,7 +5,7 @@ ceramic,0.01,0.01,0.01,0.01,0.02,0.02,brick/ glass
 fabric,0.07,0.31,0.49,0.75,0.7,0.6,absorptive
 foliage,0.15,0.11,0.1,0.07,0.06,0.07,context dependant
 food,0.15,0.11,0.1,0.07,0.06,0.07,context dependant
-glass ,0.35,0.25,0.18,0.12,0.07,0.04,brick/ glass
+glass,0.35,0.25,0.18,0.12,0.07,0.04,brick/ glass
 hair,0.25,0.35,0.42,0.46,0.5,0.5,context dependant
 leather,0.25,0.35,0.42,0.46,0.5,0.5,context dependant
 metal,0.1,0.05,0.06,0.07,0.09,0.08,brick/ glass
@@ -14,7 +14,7 @@ other,0.5,0.5,0.5,0.5,0.5,0.5,context dependant
 painted,0.013,0.015,0.02,0.03,0.04,0.05,warm reflectors
 paper,0.013,0.015,0.02,0.03,0.04,0.05,warm reflectors
 plastic,0.02,0.03,0.03,0.03,0.03,0.02,brick/ glass
-polished stone,0.1,0.05,0.06,0.07,0.09,0.08,brick/ glass
+polishedstone,0.1,0.05,0.06,0.07,0.09,0.08,brick/ glass
 skin,0.25,0.35,0.42,0.46,0.5,0.5,context dependant
 sky,0.99,0.99,0.99,0.99,0.99,0.99,heavy absorption
 stone,0.36,0.44,0.31,0.29,0.39,0.25,brick/ glass
