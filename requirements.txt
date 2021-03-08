@@ -3,5 +3,4 @@ pillow
 scikit-image
 argparse
 opencv-python
-python3-tk
 matplotlib
