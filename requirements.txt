@@ -2,6 +2,6 @@ numpy
 pillow
 scikit-image
 argparse
-opencv-python==4.1.0
+opencv-python
 python3-tk
 matplotlib
