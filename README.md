@@ -1,4 +1,4 @@
-# Material Segmentation using MINC dataset
+# Material Segmentation using MINC dataset [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aoifemcdonagh/material-segmentation/blob/master/demo.ipynb)
 This repo contains code written for a project as part of my Master's thesis. 
 The project aimed to develop a method of estimating room acoustic properties from images. 
 
