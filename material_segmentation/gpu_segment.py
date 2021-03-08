@@ -6,7 +6,7 @@ import skimage
 import time
 import os
 os.environ['GLOG_minloglevel'] = '2'  # Suppressing caffe printouts of network initialisation
-import caffe
+import caffe2 as caffe
 caffe.set_mode_gpu()
 
 top_dir = os.path.dirname(os.path.realpath(__file__))  # Find path to directory containing this script
